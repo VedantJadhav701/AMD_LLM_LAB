@@ -1,6 +1,6 @@
 # AMD LLM Lab
 
-Local FastAPI service for prediction and configuration planning on AMD Instinct MI300X. The service wraps the saved v0.1.0 VRAM and throughput models and exposes the benchmark dataset used by the research project.
+AMD LLM Lab v1.5.0 is a local FastAPI service and responsive dashboard for inference planning. It wraps the saved v0.1.0 VRAM and throughput predictor artifacts with an empirical estimation/provenance layer and exposes the benchmark dataset used by the research project.
 
 ## Start the API
 

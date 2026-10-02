@@ -1,7 +1,8 @@
 {
   "project": "AMD LLM Lab",
-  "version": "0.1.0",
-  "status": "research_prototype",
+  "version": "1.5.0",
+  "predictor_artifact_version": "0.1.0",
+  "status": "research_tool",
   "hardware": "AMD Instinct MI300X",
   "dataset_rows": 57,
   "predictors": [

@@ -106,7 +106,8 @@ class EstimationEngine:
             "vram_gb": estimate_vram,
             "throughput_tok_s": estimate_speed,
             "source_type": source_type,
-            "source_id": f"amd_llm_lab_master.csv+predictors_{self.predictor.version}",
+            "source_id": (f"amd_llm_lab_master.csv+predictor_artifacts_v"
+                          f"{self.predictor.artifact_version}+estimation_v{self.predictor.version}"),
             "confidence": round(confidence, 2),
             "data_coverage": round(coverage, 2),
             "source_count": int(len(anchors)),

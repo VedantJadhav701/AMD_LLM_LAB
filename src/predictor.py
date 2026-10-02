@@ -66,8 +66,10 @@ class Predictor:
             with open(version_path, "r", encoding="utf-8") as f:
                 ver_data = json.load(f)
                 self.version = ver_data.get("version", "v0.1.0")
+                self.artifact_version = ver_data.get("predictor_artifact_version", "unknown")
         else:
             self.version = "v0.1.0"
+            self.artifact_version = "unknown"
 
     def predict_vram(self, parameters_b: float) -> float:
         """Predict peak VRAM in GB for a given parameter count in billions."""

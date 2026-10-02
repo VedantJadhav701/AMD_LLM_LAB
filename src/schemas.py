@@ -81,11 +81,11 @@ class PredictionValues(BaseModel):
 class PredictionResponse(BaseModel):
     prediction: PredictionValues
     uncertainty: UncertaintyInfo = Field(..., description="Prediction error & uncertainty metrics")
-    model_version: str = Field("v0.1.0", description="Model artifact release version")
+    model_version: str = Field("v1.5.0", description="Estimation service release version")
     prediction_type: Literal["measured", "estimated", "interpolated"] = "estimated"
     training_dataset: str = "amd_llm_lab_master.csv"
     source_type: Literal["estimated"] = "estimated"
-    source_id: str = "throughput_predictor_v0.1.0"
+    source_id: str = "throughput_predictor_v1.5.0"
     confidence: float = Field(0.0, ge=0, le=1)
     data_coverage: float = Field(0.0, ge=0, le=1)
     source_count: int = Field(0, ge=0)
@@ -140,7 +140,7 @@ class ConfigurationRecommendation(BaseModel):
     vram_mae_gb: float = Field(..., description="Empirical VRAM MAE; VRAM estimate is size-based")
     throughput_mae_tok_s: float = Field(..., description="Empirical throughput MAE")
     source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
-    source_id: str = "throughput_predictor_v0.1.0"
+    source_id: str = "throughput_predictor_v1.5.0"
     confidence: float = Field(0.0, ge=0, le=1)
     data_coverage: float = Field(0.0, ge=0, le=1)
     source_count: int = Field(0, ge=0)
@@ -155,7 +155,7 @@ class RecommendationResponse(BaseModel):
     feasible_count: int = Field(..., description="Number of configurations meeting all constraints")
     objective: Literal["throughput", "memory", "balanced"] = Field(..., description="Optimization objective used")
     constraints: Dict[str, Any] = Field(..., description="Constraints evaluated")
-    model_version: str = Field("v0.1.0", description="Model release version")
+    model_version: str = Field("v1.5.0", description="Estimation service release version")
     warning: str = Field(..., description="Interpretation limits for these recommendations")
     prediction_type: Literal["estimated"] = "estimated"
     training_dataset: str = "amd_llm_lab_master.csv"

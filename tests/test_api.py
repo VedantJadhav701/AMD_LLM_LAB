@@ -21,7 +21,7 @@ async def test_complete_api_route_contract():
 
         health = await test_client.get("/health")
         assert health.status_code == 200
-        assert health.json() == {"status": "ok", "model_version": "0.1.0", "dataset_rows": 57}
+        assert health.json() == {"status": "ok", "model_version": "1.5.0", "dataset_rows": 57}
 
         models = await test_client.get("/models")
         assert models.status_code == 200
@@ -53,7 +53,7 @@ async def test_complete_api_route_contract():
         assert prediction_body["training_dataset"] == "amd_llm_lab_master.csv"
         assert prediction_body["prediction"]["vram_gb"] > 0
         assert prediction_body["prediction"]["throughput_tok_s"] >= 0
-        assert prediction_body["model_version"] == "0.1.0"
+        assert prediction_body["model_version"] == "1.5.0"
 
         interpolated = await test_client.post("/predict", json={
             "parameters_b": 32.76,
@@ -65,6 +65,8 @@ async def test_complete_api_route_contract():
         assert interpolated.status_code == 200
         assert interpolated.json()["prediction_type"] == "interpolated"
         assert 0 < interpolated.json()["data_coverage"] <= 1
+        assert "predictor_artifacts_v0.1.0" in interpolated.json()["source_id"]
+        assert "estimation_v1.5.0" in interpolated.json()["source_id"]
 
         recommendation = await test_client.post("/recommend", json={"available_vram_gb": 24})
         assert recommendation.status_code == 200
@@ -75,7 +77,7 @@ async def test_complete_api_route_contract():
 
         metadata = await test_client.get("/metadata")
         assert metadata.status_code == 200
-        assert metadata.json()["version"]["version"] == "0.1.0"
+        assert metadata.json()["version"]["version"] == "1.5.0"
 
         evaluation = await test_client.get("/evaluation")
         assert evaluation.status_code == 200
