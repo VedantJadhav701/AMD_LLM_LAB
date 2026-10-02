@@ -1,0 +1,22 @@
+{
+  "vram": {
+    "mae_gb": 7.582727572612966,
+    "median_absolute_error_gb": 6.287956805144157,
+    "p75_absolute_error_gb": 7.9737989407813,
+    "p90_absolute_error_gb": 12.239931206039572,
+    "p95_absolute_error_gb": 30.73227062403803
+  },
+  "throughput": {
+    "mae_tok_s": 12.010591017683451,
+    "median_absolute_error_tok_s": 12.27331997047964,
+    "p75_absolute_error_tok_s": 17.249297495759542,
+    "p90_absolute_error_tok_s": 18.60941263469049,
+    "p95_absolute_error_tok_s": 19.854030652185557
+  },
+  "application_guidance": {
+    "vram_default_error_gb": 7.582727572612966,
+    "throughput_default_error_tok_s": 12.010591017683451,
+    "recommendation": "Display prediction together with empirical error estimate. Do not represent predictions as exact measurements.",
+    "coverage_warning": "Predictions for model sizes far outside the benchmarked range should be marked as lower-confidence."
+  }
+}

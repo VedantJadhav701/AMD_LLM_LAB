@@ -1,0 +1,5 @@
+context,output_tokens,latency_s,generation_tok_s,peak_vram_gb,model,parameters_b,dtype,quantization,hardware,backend
+512,128,12.171524559147656,10.516348989642392,19.453391075134277,Qwen/Qwen2.5-14B-Instruct,14.77,INT4,qint4,AMD Instinct MI300X,Transformers + Optimum Quanto
+2048,128,12.69630157481879,10.081676088560215,19.700485229492188,Qwen/Qwen2.5-14B-Instruct,14.77,INT4,qint4,AMD Instinct MI300X,Transformers + Optimum Quanto
+4096,128,13.409910693764687,9.545179153170437,20.08892822265625,Qwen/Qwen2.5-14B-Instruct,14.77,INT4,qint4,AMD Instinct MI300X,Transformers + Optimum Quanto
+8192,128,14.944646586664021,8.564939910604634,20.87738037109375,Qwen/Qwen2.5-14B-Instruct,14.77,INT4,qint4,AMD Instinct MI300X,Transformers + Optimum Quanto

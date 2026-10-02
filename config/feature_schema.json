@@ -1,0 +1,44 @@
+{
+  "vram": {
+    "features": [
+      "parameters_b"
+    ],
+    "target": "peak_vram_gb",
+    "model": "LinearRegression",
+    "formula": "VRAM = 1.30873231 * parameters_b + 7.21680439"
+  },
+  "throughput": {
+    "raw_features": [
+      "parameters_b",
+      "context_tokens",
+      "precision",
+      "quantization",
+      "backend"
+    ],
+    "categorical_features": [
+      "precision",
+      "quantization",
+      "backend"
+    ],
+    "encoded_features": [
+      "parameters_b",
+      "context_tokens",
+      "precision_BF16",
+      "precision_FP16",
+      "precision_INT2",
+      "precision_INT4",
+      "precision_INT8",
+      "quantization_none",
+      "quantization_qint2",
+      "quantization_qint4",
+      "quantization_qint8",
+      "backend_Optimum Quanto",
+      "backend_Transformers",
+      "backend_Transformers + Optimum Quanto"
+    ],
+    "target": "generation_tok_s",
+    "model": "ExtraTreesRegressor",
+    "n_estimators": 300,
+    "random_state": 42
+  }
+}

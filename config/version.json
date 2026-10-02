@@ -1,0 +1,14 @@
+{
+  "project": "AMD LLM Lab",
+  "version": "0.1.0",
+  "status": "research_prototype",
+  "hardware": "AMD Instinct MI300X",
+  "dataset_rows": 57,
+  "predictors": [
+    "vram_predictor.joblib",
+    "throughput_predictor.joblib"
+  ],
+  "recommendation_engine": true,
+  "uncertainty_estimation": true,
+  "limitations_documented": true
+}

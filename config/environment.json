@@ -1,0 +1,14 @@
+{
+  "project": "AMD LLM Lab",
+  "tagline": "Test. Predict. Optimize. Deploy.",
+  "hardware": "AMD Instinct MI300X",
+  "gpu_architecture": "gfx942:sramecc+:xnack-",
+  "gpu_vram_gb": 192,
+  "purpose": "LLM inference benchmarking, prediction and configuration recommendation",
+  "torch_version": "2.10.0+rocm7.2.4.git3d3aa833",
+  "cuda_available": true,
+  "torch_device": "AMD Instinct MI300X VF",
+  "torch_cuda_version": null,
+  "transformers_version": "5.12.0",
+  "sklearn_version": "1.9.1"
+}

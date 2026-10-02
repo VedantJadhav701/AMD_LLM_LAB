@@ -1,0 +1,49 @@
+{
+  "project": "AMD LLM Lab",
+  "configuration_space": [
+    {
+      "precision": "BF16",
+      "quantization": "none",
+      "backend": "Transformers"
+    },
+    {
+      "precision": "FP16",
+      "quantization": "none",
+      "backend": "Transformers"
+    },
+    {
+      "precision": "INT2",
+      "quantization": "qint2",
+      "backend": "Transformers + Optimum Quanto"
+    },
+    {
+      "precision": "INT4",
+      "quantization": "qint4",
+      "backend": "Optimum Quanto"
+    },
+    {
+      "precision": "INT4",
+      "quantization": "qint4",
+      "backend": "Transformers + Optimum Quanto"
+    },
+    {
+      "precision": "INT8",
+      "quantization": "qint8",
+      "backend": "Transformers + Optimum Quanto"
+    }
+  ],
+  "objectives": [
+    "throughput",
+    "memory",
+    "balanced"
+  ],
+  "constraint_order": [
+    "VRAM limit",
+    "minimum throughput",
+    "objective ranking"
+  ],
+  "supported_hardware": [
+    "AMD Instinct MI300X"
+  ],
+  "warning": "Recommendations are predictions based on the current MI300X benchmark dataset and should be validated with real inference benchmarks."
+}

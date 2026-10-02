@@ -1,0 +1,66 @@
+{
+  "rows": 57,
+  "columns": [
+    "model",
+    "parameters_b",
+    "precision",
+    "quantization",
+    "context_tokens",
+    "output_tokens",
+    "latency_s",
+    "generation_tok_s",
+    "peak_vram_gb",
+    "memory_per_billion_params_gb",
+    "tokens_per_gb",
+    "vram_utilization_pct",
+    "hardware",
+    "gpu",
+    "gpu_vram_gb",
+    "backend",
+    "source_file"
+  ],
+  "models": [
+    "Qwen/Qwen2.5-0.5B-Instruct",
+    "Qwen/Qwen2.5-1.5B-Instruct",
+    "Qwen/Qwen2.5-14B-Instruct",
+    "Qwen/Qwen2.5-32B-Instruct",
+    "Qwen/Qwen2.5-3B-Instruct",
+    "Qwen/Qwen2.5-7B-Instruct"
+  ],
+  "parameter_sizes_b": [
+    0.5,
+    1.544,
+    3.086,
+    7.615,
+    14.77,
+    32.76
+  ],
+  "precisions": [
+    "BF16",
+    "FP16",
+    "INT2",
+    "INT4",
+    "INT8"
+  ],
+  "quantizations": [
+    "none",
+    "qint2",
+    "qint4",
+    "qint8"
+  ],
+  "backends": [
+    "Optimum Quanto",
+    "Transformers",
+    "Transformers + Optimum Quanto"
+  ],
+  "contexts": [
+    512,
+    1024,
+    2048,
+    4096,
+    8192
+  ],
+  "hardware": [
+    "AMD Instinct MI300X"
+  ]
+}

@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --ink: #ecf2f0;
+  --muted: #95a39f;
+  --line: #293635;
+  --paper: #101615;
+  --surface: #171f1d;
+  --sidebar: #0c1110;
+  --red: #f25c62;
+  --green: #58c7a5;
+  --blue: #61b6d5;
+  --amber: #e0b763;
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+::selection { background: #f6c4c5; color: var(--ink); }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+input, select {
+  color-scheme: dark;
+}
+
+input::placeholder { color: #778480; }
+
+.chart-grid line { stroke: #293635; }
+.chart-axis text { fill: #95a39f; font-size: 11px; }
+.chart-tooltip {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #171f1d;
+  color: var(--ink);
+  padding: 9px 11px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 28%);
+}
+
+@media (max-width: 767px) {
+  body { font-size: 13px; }
+}

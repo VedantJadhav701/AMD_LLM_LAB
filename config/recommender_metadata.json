@@ -1,0 +1,50 @@
+{
+  "configuration_count": 6,
+  "configurations": [
+    {
+      "precision": "BF16",
+      "quantization": "none",
+      "backend": "Transformers"
+    },
+    {
+      "precision": "FP16",
+      "quantization": "none",
+      "backend": "Transformers"
+    },
+    {
+      "precision": "INT2",
+      "quantization": "qint2",
+      "backend": "Transformers + Optimum Quanto"
+    },
+    {
+      "precision": "INT4",
+      "quantization": "qint4",
+      "backend": "Optimum Quanto"
+    },
+    {
+      "precision": "INT4",
+      "quantization": "qint4",
+      "backend": "Transformers + Optimum Quanto"
+    },
+    {
+      "precision": "INT8",
+      "quantization": "qint8",
+      "backend": "Transformers + Optimum Quanto"
+    }
+  ],
+  "objectives": [
+    "throughput",
+    "memory",
+    "balanced"
+  ],
+  "constraints": [
+    "vram_limit_gb",
+    "min_throughput_tok_s"
+  ],
+  "benchmark_size_range_b": [
+    0.5,
+    32.76
+  ],
+  "hardware": "AMD Instinct MI300X",
+  "warning": "VRAM starts from a size-based predictor and is calibrated with nearby measured rows when available; throughput uses the full configuration predictor plus empirical residual calibration. Unmeasured configurations remain estimates, not benchmark observations."
+}

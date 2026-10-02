@@ -1,0 +1,56 @@
+{
+  "project": "AMD LLM Lab",
+  "dataset": {
+    "file": "amd_llm_lab_master.csv",
+    "rows": 57,
+    "models": 6,
+    "precisions": [
+      "BF16",
+      "INT8",
+      "INT4",
+      "INT2",
+      "FP16"
+    ],
+    "quantizations": [
+      "none",
+      "qint8",
+      "qint4",
+      "qint2"
+    ],
+    "backends": [
+      "Transformers",
+      "Transformers + Optimum Quanto",
+      "Optimum Quanto"
+    ],
+    "contexts": [
+      512,
+      1024,
+      2048,
+      4096,
+      8192
+    ]
+  },
+  "hardware": {
+    "gpu": "AMD Instinct MI300X",
+    "vram_gb": 192,
+    "architecture": "gfx942:sramecc+:xnack-"
+  },
+  "targets": {
+    "vram": "peak_vram_gb",
+    "throughput": "generation_tok_s"
+  },
+  "validation": {
+    "method": "Leave-One-Model-Out",
+    "throughput_mae_tok_s": 12.0106,
+    "throughput_r2": 0.657,
+    "vram_mae_gb": 6.7521,
+    "vram_r2": 0.5356
+  },
+  "notes": [
+    "Current predictors are validated only on AMD Instinct MI300X.",
+    "Throughput predictor uses full configuration features.",
+    "VRAM predictor is primarily size-based.",
+    "Prediction uncertainty should be exposed in the application.",
+    "Model-size extrapolation, especially beyond 14B, is currently weak."
+  ]
+}
