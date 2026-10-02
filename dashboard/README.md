@@ -4,13 +4,13 @@ Next.js dashboard for the AMD LLM Lab FastAPI service. Workspaces: Overview, Pre
 
 ## Run locally
 
-Start the API in one terminal from `AMD_LLM_LAB/`:
+Start the API in one terminal from the repository's `backend/` directory:
 
 ```powershell
 conda run -n thermo_agent uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Start the dashboard in another terminal from `AMD_LLM_LAB/dashboard/`:
+Start the dashboard in another terminal from `dashboard/`:
 
 ```powershell
 npm install

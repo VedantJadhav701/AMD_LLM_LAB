@@ -251,3 +251,8 @@ class BenchmarkRecord(BaseModel):
     gpu_vram_gb: float
     backend: str
     source_file: str
+    source_type: Literal["measured"] = "measured"
+    source_id: str = "amd_llm_lab_master.csv"
+    confidence: float = Field(1.0, ge=0, le=1, description="Confidence in source attribution, not instrument accuracy")
+    data_coverage: float = Field(1.0, ge=0, le=1, description="Coverage of this directly measured record")
+    source_count: int = Field(1, ge=1)

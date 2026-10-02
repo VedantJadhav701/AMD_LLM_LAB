@@ -43,6 +43,8 @@ async def test_complete_api_route_contract():
         assert benchmarks.status_code == 200
         assert len(benchmarks.json()) == 5
         assert all("peak_vram_gb" in row and "generation_tok_s" in row for row in benchmarks.json())
+        assert all(row["source_type"] == "measured" and row["source_id"] == "amd_llm_lab_master.csv" for row in benchmarks.json())
+        assert all(row["confidence"] == 1 and row["data_coverage"] == 1 for row in benchmarks.json())
 
         prediction = await test_client.post("/predict", json={"parameters_b": 7.615})
         assert prediction.status_code == 200

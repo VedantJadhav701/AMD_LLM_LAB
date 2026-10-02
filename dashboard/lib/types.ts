@@ -43,6 +43,11 @@ export type BenchmarkRecord = {
   gpu_vram_gb: number;
   backend: string;
   source_file: string;
+  source_type: "measured";
+  source_id: string;
+  confidence: number;
+  data_coverage: number;
+  source_count: number;
 };
 
 export type PredictionRequest = {
