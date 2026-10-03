@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/generate-public-data.mjs && next dev -H 127.0.0.1 -p 3000",
+    "build": "node scripts/generate-public-data.mjs && next build",
+    "start": "next start -H 127.0.0.1 -p 3000",
     "lint": "eslint ."
   },
   "dependencies": {

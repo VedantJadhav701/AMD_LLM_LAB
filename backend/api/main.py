@@ -105,9 +105,9 @@ def predict(request: PredictionRequest):
     result.prediction_type = provenance["source_type"]
     result.source_type = provenance["source_type"]
     result.source_id = provenance["source_id"]
-    result.confidence = provenance["confidence"]
-    result.data_coverage = provenance["data_coverage"]
     result.source_count = provenance["source_count"]
+    result.vram_source_type = provenance["vram_source_type"]
+    result.throughput_source_type = provenance["throughput_source_type"]
     return result
 
 
@@ -135,12 +135,14 @@ def models():
 def hardware():
     with (ROOT_DIR / "config" / "environment.json").open(encoding="utf-8") as file:
         config = json.load(file)
+    torch_version = config.get("torch_version")
+    rocm_match = re.search(r"rocm([\d.]+)", torch_version or "", re.IGNORECASE)
     return HardwareInfo(
-        gpu=config.get("hardware", "AMD Instinct MI300X"),
-        vram_gb=config.get("gpu_vram_gb", 192.0),
-        architecture=config.get("gpu_architecture", "gfx942"),
-        rocm="7.2.x",
-        pytorch=config.get("torch_version", "unknown"),
+        gpu=config["hardware"],
+        vram_gb=config["gpu_vram_gb"],
+        architecture=config["gpu_architecture"],
+        rocm=f"{rocm_match.group(1)}" if rocm_match else None,
+        pytorch=torch_version,
     )
 
 

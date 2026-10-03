@@ -17,30 +17,24 @@ class PredictionRequest(BaseModel):
         json_schema_extra={"example": 14.77}
     )
     context_tokens: int = Field(
-        4096,
+        ...,
         gt=0,
         le=8192,
         description="Target context window in tokens (e.g. 512, 1024, 2048, 4096, 8192)",
         json_schema_extra={"example": 4096}
     )
-    gpu_vram_gb: float = Field(
-        192.0,
-        gt=0,
-        description="GPU VRAM capacity in GB (default 192.0 for AMD MI300X)",
-        json_schema_extra={"example": 192.0}
-    )
     precision: Literal["BF16", "FP16", "INT8", "INT4", "INT2"] = Field(
-        "INT4",
+        ...,
         description="Precision format: 'BF16', 'FP16', 'INT8', 'INT4', or 'INT2'",
         json_schema_extra={"example": "INT4"}
     )
     quantization: Literal["none", "qint8", "qint4", "qint2"] = Field(
-        "qint4",
+        ...,
         description="Quantization scheme: 'none', 'qint8', 'qint4', or 'qint2'",
         json_schema_extra={"example": "qint4"}
     )
     backend: Literal["Transformers", "Optimum Quanto", "Transformers + Optimum Quanto"] = Field(
-        "Transformers + Optimum Quanto",
+        ...,
         description="Inference backend: 'Transformers', 'Optimum Quanto', or 'Transformers + Optimum Quanto'",
         json_schema_extra={"example": "Transformers + Optimum Quanto"}
     )
@@ -84,11 +78,11 @@ class PredictionResponse(BaseModel):
     model_version: str = Field("v1.5.0", description="Estimation service release version")
     prediction_type: Literal["measured", "estimated", "interpolated"] = "estimated"
     training_dataset: str = "amd_llm_lab_master.csv"
-    source_type: Literal["estimated"] = "estimated"
+    source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
     source_id: str = "throughput_predictor_v1.5.0"
-    confidence: float = Field(0.0, ge=0, le=1)
-    data_coverage: float = Field(0.0, ge=0, le=1)
     source_count: int = Field(0, ge=0)
+    vram_source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
+    throughput_source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
 
 
 PredictionOutput = PredictionResponse
@@ -104,20 +98,20 @@ class RecommendationRequest(BaseModel):
         json_schema_extra={"example": 24.0}
     )
     minimum_throughput_tok_s: float = Field(
-        0.0,
+        ...,
         ge=0,
         description="Minimum acceptable token generation speed in tok/s",
         json_schema_extra={"example": 10.0}
     )
     context_tokens: int = Field(
-        4096,
+        ...,
         gt=0,
         le=8192,
         description="Desired context token length",
         json_schema_extra={"example": 4096}
     )
     objective: Literal["throughput", "memory", "balanced"] = Field(
-        "throughput",
+        ...,
         description="Optimization target: 'throughput', 'memory', or 'balanced'",
         json_schema_extra={"example": "throughput"}
     )
@@ -141,9 +135,9 @@ class ConfigurationRecommendation(BaseModel):
     throughput_mae_tok_s: float = Field(..., description="Empirical throughput MAE")
     source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
     source_id: str = "throughput_predictor_v1.5.0"
-    confidence: float = Field(0.0, ge=0, le=1)
-    data_coverage: float = Field(0.0, ge=0, le=1)
     source_count: int = Field(0, ge=0)
+    vram_source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
+    throughput_source_type: Literal["measured", "estimated", "interpolated"] = "estimated"
 
 
 class RecommendationResponse(BaseModel):
@@ -166,11 +160,11 @@ RecommendationOutput = RecommendationResponse
 
 
 class HardwareInfo(BaseModel):
-    gpu: str = Field("AMD Instinct MI300X", description="GPU Model Name")
-    vram_gb: float = Field(192.0, description="Total usable VRAM in GB")
-    architecture: str = Field("gfx942:sramecc+:xnack-", description="GPU Architecture String")
-    rocm: str = Field("7.2.x", description="ROCm Driver & Runtime Version")
-    pytorch: str = Field("2.11.0+gitd0c8b1f", description="PyTorch Release Version")
+    gpu: str = Field(..., description="GPU recorded by the benchmark environment")
+    vram_gb: float = Field(..., description="VRAM recorded by the benchmark environment")
+    architecture: str = Field(..., description="Architecture recorded by the benchmark environment")
+    rocm: Optional[str] = Field(None, description="ROCm version recorded by the benchmark environment")
+    pytorch: Optional[str] = Field(None, description="PyTorch version recorded by the benchmark environment")
 
 
 class LocalHardwareInfo(BaseModel):
@@ -253,6 +247,3 @@ class BenchmarkRecord(BaseModel):
     source_file: str
     source_type: Literal["measured"] = "measured"
     source_id: str = "amd_llm_lab_master.csv"
-    confidence: float = Field(1.0, ge=0, le=1, description="Confidence in source attribution, not instrument accuracy")
-    data_coverage: float = Field(1.0, ge=0, le=1, description="Coverage of this directly measured record")
-    source_count: int = Field(1, ge=1)

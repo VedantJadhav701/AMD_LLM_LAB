@@ -7,7 +7,6 @@ import { api, modelLabel } from "@/lib/api";
 import type { ApiConfiguration, BenchmarkRecord, ModelInfo, RecommendationRow } from "@/lib/types";
 import { FieldSelect, formatMetric, formatModel, MessageState, PageHeader, Panel } from "@/components/ui";
 
-const contexts = [512, 1024, 2048, 4096, 8192];
 const metrics = [
   { key: "vram", label: "VRAM", field: "peak_vram_gb", unit: "GB", color: "#397c9a" },
   { key: "throughput", label: "Throughput", field: "generation_tok_s", unit: "tok/s", color: "#137c67" },
@@ -29,21 +28,25 @@ export default function BenchmarksPage() {
   const [metricKey, setMetricKey] = useState<(typeof metrics)[number]["key"]>("vram");
   const [xAxis, setXAxis] = useState<"parameters_b" | "context_tokens">("parameters_b");
   const [estimates, setEstimates] = useState<RecommendationRow[]>([]);
+  const [benchmarkVram, setBenchmarkVram] = useState<number | null>(null);
 
   useEffect(() => {
-    Promise.all([api.models(), api.metadata()])
-      .then(([modelData, metadata]) => {
+    Promise.all([api.models(), api.metadata(), api.hardware()])
+      .then(([modelData, metadata, hardware]) => {
         setModels(modelData);
         setConfigurations(metadata.recommender_metadata.configurations);
+        setBenchmarkVram(hardware.vram_gb);
       })
       .catch((reason: Error) => setError(reason.message));
   }, []);
 
   useEffect(() => {
-    api.recommend({ available_vram_gb: 10000, minimum_throughput_tok_s: 0, context_tokens: 4096, objective: "balanced" })
+    const benchmarkContext = models[0]?.context_lengths[0];
+    if (benchmarkVram == null || benchmarkContext == null) return;
+    api.recommend({ available_vram_gb: benchmarkVram, minimum_throughput_tok_s: 0, context_tokens: benchmarkContext, objective: "balanced" })
       .then((result) => setEstimates(result.candidate_configurations.filter((row) => row.source_type !== "measured")))
       .catch(() => setEstimates([]));
-  }, []);
+  }, [benchmarkVram, models]);
 
   useEffect(() => {
     api.benchmarks(new URLSearchParams(queryKey))
@@ -53,6 +56,7 @@ export default function BenchmarksPage() {
   }, [queryKey]);
 
   const parameterOptions = useMemo(() => models.map((model) => ({ value: String(model.parameters_b), label: `${modelLabel(model.model, model.parameters_b)}B` })), [models]);
+  const contextOptions = useMemo(() => [...new Set(models.flatMap((model) => model.context_lengths))].sort((a, b) => a - b).map((value) => ({ value: String(value), label: `${value.toLocaleString()} tokens` })), [models]);
   const precisionOptions = [...new Set(configurations.map((item) => item.precision))].map((value) => ({ value, label: value }));
   const quantizationOptions = [...new Set(configurations.map((item) => item.quantization))].map((value) => ({ value, label: value }));
   const backendOptions = [...new Set(configurations.map((item) => item.backend))].map((value) => ({ value, label: value }));
@@ -94,7 +98,7 @@ export default function BenchmarksPage() {
           <FieldSelect label="Precision" value={filters.precision} onChange={(value) => setFilter("precision", value)} options={[{ value: "", label: "All precisions" }, ...precisionOptions]} />
           <FieldSelect label="Quantization" value={filters.quantization} onChange={(value) => setFilter("quantization", value)} options={[{ value: "", label: "All quantizations" }, ...quantizationOptions]} />
           <FieldSelect label="Backend" value={filters.backend} onChange={(value) => setFilter("backend", value)} options={[{ value: "", label: "All backends" }, ...backendOptions]} />
-          <FieldSelect label="Context" value={filters.context} onChange={(value) => setFilter("context", value)} options={[{ value: "", label: "All contexts" }, ...contexts.map((value) => ({ value: String(value), label: `${value.toLocaleString()} tokens` }))]} />
+          <FieldSelect label="Context" value={filters.context} onChange={(value) => setFilter("context", value)} options={[{ value: "", label: "All contexts" }, ...contextOptions]} />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] pt-3">
           <p className="text-[11px] text-[var(--muted)]">Nominal model sizes match the corresponding measured parameter counts.</p>
@@ -138,7 +142,7 @@ export default function BenchmarksPage() {
         </div>}
       </Panel>
       <Panel title="Unmeasured configurations" detail="Estimated at 4,096 context from the saved predictors and empirical benchmark distribution. These are not benchmark observations." className="mt-4">
-        {estimates.length === 0 ? <p className="text-xs text-[var(--muted)]">Model-based estimates are unavailable while the API is offline.</p> : <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{estimates.slice(0, 12).map((row) => <article key={`${row.model}-${row.precision}-${row.backend}`} className="rounded border border-[var(--line)] bg-[#111715] p-3"><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold">{modelLabel(row.model, row.parameters_b)} · {row.precision}</p><p className="mt-1 text-[9px] text-[var(--muted)]">{row.backend}</p></div><span className={`rounded border px-1.5 py-1 text-[8px] font-bold uppercase ${row.source_type === "interpolated" ? "border-[#66552e] bg-[#332c19] text-[#e3c475]" : "border-[#365769] bg-[#192d36] text-[#83cde7]"}`}>{row.source_type}</span></div><div className="mt-3 flex justify-between border-t border-[var(--line)] pt-2 text-[10px] tabular-nums"><span>{row.predicted_vram_gb.toFixed(2)} GB VRAM</span><span>{row.predicted_generation_tok_s.toFixed(2)} tok/s</span></div><p className="mt-2 text-[9px] text-[var(--muted)]">{Math.round(row.confidence * 100)}% confidence · {Math.round(row.data_coverage * 100)}% data coverage</p></article>)}</div>}
+        {estimates.length === 0 ? <p className="text-xs text-[var(--muted)]">Model-based estimates are unavailable until the API and benchmark hardware metadata load.</p> : <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{estimates.map((row) => <article key={`${row.model}-${row.precision}-${row.backend}`} className="rounded border border-[var(--line)] bg-[#111715] p-3"><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold">{modelLabel(row.model, row.parameters_b)} · {row.precision}</p><p className="mt-1 text-[9px] text-[var(--muted)]">{row.backend}</p></div><span className={`rounded border px-1.5 py-1 text-[8px] font-bold uppercase ${row.source_type === "interpolated" ? "border-[#66552e] bg-[#332c19] text-[#e3c475]" : "border-[#365769] bg-[#192d36] text-[#83cde7]"}`}>{row.source_type}</span></div><div className="mt-3 flex justify-between border-t border-[var(--line)] pt-2 text-[10px] tabular-nums"><span>{row.vram_source_type}: {row.predicted_vram_gb.toFixed(2)} GB</span><span>{row.throughput_source_type}: {row.predicted_generation_tok_s.toFixed(2)} tok/s</span></div><p className="mt-2 text-[9px] text-[var(--muted)]">Calibrated with {row.source_count} measured supporting rows</p></article>)}</div>}
       </Panel>
     </>
   );

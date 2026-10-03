@@ -6,7 +6,6 @@ import { api, modelLabel } from "@/lib/api";
 import type { ApiConfiguration, ModelInfo, PredictionResponse } from "@/lib/types";
 import { FieldSelect, MessageState, PageHeader, Panel, StatTile } from "@/components/ui";
 
-const contexts = [512, 1024, 2048, 4096, 8192];
 const keyOf = (config: ApiConfiguration) => `${config.precision}|${config.quantization}|${config.backend}`;
 
 export default function PredictorPage() {
@@ -19,15 +18,18 @@ export default function PredictorPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const contexts = useMemo(() => models[0]?.context_lengths ?? [], [models]);
 
   useEffect(() => {
     Promise.all([api.models(), api.metadata()])
       .then(([modelData, metadata]) => {
         setModels(modelData);
-        if (modelData.length) setParameters(String(modelData.find((model) => Math.abs(model.parameters_b - 7.615) < 0.01)?.parameters_b ?? modelData[0].parameters_b));
+        if (modelData.length) setParameters(String(modelData[0].parameters_b));
+        const availableContexts = modelData[0]?.context_lengths ?? [];
+        if (availableContexts.length) setContext(String(availableContexts[0]));
         const configData = metadata.recommender_metadata.configurations;
         setConfigurations(configData);
-        if (configData.length) setConfigurationKey(keyOf(configData.find((item) => item.precision === "INT4" && item.backend === "Transformers + Optimum Quanto") ?? configData[0]));
+        if (configData.length) setConfigurationKey(keyOf(configData[0]));
       })
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoading(false));
@@ -87,17 +89,18 @@ export default function PredictorPage() {
         {result ? <div className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--line)] bg-[var(--surface)] px-4 py-3">
             <span className="flex items-center gap-2 text-sm font-semibold uppercase text-[var(--green)]"><span className="h-2 w-2 rounded-full bg-[var(--green)]" />{result.source_type}</span>
-            <span className="text-xs text-[var(--muted)]">Model {result.model_version} · {Math.round(result.confidence * 100)}% confidence</span>
+            <span className="text-xs text-[var(--muted)]">Model {result.model_version} · {result.source_count} supporting rows</span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <StatTile label="Estimated peak VRAM" value={result.prediction.vram_gb.toFixed(2)} suffix="GB" note={`Empirical MAE ±${result.uncertainty.vram_mae_gb.toFixed(2)} GB`} tone="blue" />
-            <StatTile label="Estimated generation" value={result.prediction.throughput_tok_s.toFixed(2)} suffix="tok/s" note={`Empirical MAE ±${result.uncertainty.throughput_mae_tok_s.toFixed(2)} tok/s`} tone="green" />
+            <StatTile label={`${result.vram_source_type === "measured" ? "Measured" : "Estimated"} peak VRAM`} value={result.prediction.vram_gb.toFixed(2)} suffix="GB" note={result.vram_source_type === "measured" ? "Exact benchmark field" : `Held-out model MAE ±${result.uncertainty.vram_mae_gb.toFixed(2)} GB`} tone="blue" />
+            <StatTile label={`${result.throughput_source_type === "measured" ? "Measured" : "Estimated"} generation`} value={result.prediction.throughput_tok_s.toFixed(2)} suffix="tok/s" note={result.throughput_source_type === "measured" ? "Exact benchmark field" : `Held-out model MAE ±${result.uncertainty.throughput_mae_tok_s.toFixed(2)} tok/s`} tone="green" />
           </div>
-          <Panel title="Prediction provenance" detail="These are model estimates, not measured outcomes.">
+          <Panel title="Result provenance" detail={result.source_type === "measured" ? "Both values are taken from an exact measured benchmark row." : "Each value is labeled with its own source. A measured value is a direct row from the CSV; an estimated value comes from saved predictors."}>
             <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-3 text-xs">
               <dt className="text-[var(--muted)]">Source type</dt><dd className="font-medium uppercase text-[var(--ink)]">{result.source_type}</dd>
               <dt className="text-[var(--muted)]">Source ID</dt><dd className="break-all font-medium text-[var(--ink)]">{result.source_id}</dd>
-              <dt className="text-[var(--muted)]">Data coverage</dt><dd className="font-medium text-[var(--ink)]">{Math.round(result.data_coverage * 100)}% · {result.source_count} supporting rows</dd>
+              <dt className="text-[var(--muted)]">VRAM provenance</dt><dd className="font-medium uppercase text-[var(--ink)]">{result.vram_source_type}</dd>
+              <dt className="text-[var(--muted)]">Throughput provenance</dt><dd className="font-medium uppercase text-[var(--ink)]">{result.throughput_source_type}</dd>
               <dt className="text-[var(--muted)]">Model version</dt><dd className="font-medium text-[var(--ink)]">{result.model_version}</dd>
               <dt className="text-[var(--muted)]">Training data</dt><dd className="break-all font-medium text-[var(--ink)]">{result.training_dataset}</dd>
             </dl>

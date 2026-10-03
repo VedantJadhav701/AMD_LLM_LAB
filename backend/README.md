@@ -18,7 +18,7 @@ Set `AMD_LLM_LAB_CORS_ORIGINS` to a comma-separated list of dashboard origins wh
 ## Endpoints
 
 - `POST /predict` predicts peak VRAM and generation throughput for a supplied configuration. Responses identify the estimates, model version, and training dataset.
-- `POST /recommend` ranks all 36 supported model/stack candidates by `throughput`, `memory`, or `balanced`. Feasible choices remain in `feasible_configurations`; `candidate_configurations` also carries infeasible alternatives so clients can explain near misses. Each candidate includes provenance and confidence.
+- `POST /recommend` ranks supported model/stack candidates by `throughput`, `memory`, or `balanced`. The VRAM threshold is a predicted-peak planning comparison, not a runtime feasibility verdict. `candidate_configurations` includes near misses. Each metric carries its own measured/estimated/interpolated provenance and actual supporting-row count.
 - `GET /models` lists benchmarked models and their measured configuration coverage.
 - `GET /hardware` returns the recorded MI300X environment.
 - `GET /hardware/local` inspects the machine running FastAPI, with graceful CPU/RAM/GPU fallbacks. It does not inspect a remote browser's computer.
@@ -37,7 +37,7 @@ conda run -n thermo_agent pytest
 
 ## Interpretation
 
-The dataset contains 57 MI300X benchmark observations and is not modified by the estimation layer. An exact model/precision/quantization/backend/context match is returned as `measured` with `source_id=amd_llm_lab_master.csv`. Missing combinations use the saved predictors calibrated against nearby empirical rows and are labeled `estimated` or `interpolated`; every result includes confidence, data coverage, and supporting row count. These coverage values describe empirical support, not a probability of correctness.
+The dataset contains 57 MI300X benchmark observations and is not modified by the estimation layer. An exact model-size/precision/quantization/backend/context match is returned from `amd_llm_lab_master.csv`. Missing values use saved predictors calibrated against nearby empirical rows and are labeled `estimated` or `interpolated`. Provenance is reported separately for VRAM and throughput so a measured field is never used to imply that a predicted field was measured. The API reports matching source-row counts and aggregate held-out MAE; it does not invent a per-result confidence probability. Prediction and recommendation requests require explicit configuration/constraint inputs instead of silently applying a default model or context.
 
 VRAM predictions retain a parameter-size baseline and may be calibrated from nearby same-model measurements; throughput uses the full configuration feature set and nearby residual calibration. Recommendation constraints use the supplied VRAM capacity, while all performance estimates remain MI300X-calibrated. `GET /hardware/local` reports the FastAPI host, not a remote browser client, and GPU memory can remain unavailable when vendor telemetry is missing. Validate deployment decisions with real inference measurements.
 

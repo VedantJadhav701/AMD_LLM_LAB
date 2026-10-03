@@ -12,3 +12,11 @@ dashboard/out/
 dashboard/coverage/
 .npm-cache/
 tmp*.bat
+
+# Temporary scratch & image artifacts
+*.png
+claude files/
+amd_website/
+AGY_SESSION.MD
+PROJECT_STATUS.md
+codex_session.md

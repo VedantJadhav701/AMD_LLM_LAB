@@ -118,8 +118,8 @@ class Predictor:
             backend=input_data.backend
         )
 
-        vram_mae = self.uncertainty_config.get("vram", {}).get("mae_gb", 6.75)
-        tp_mae = self.uncertainty_config.get("throughput", {}).get("mae_tok_s", 12.01)
+        vram_mae = self.uncertainty_config["vram"]["mae_gb"]
+        tp_mae = self.uncertainty_config["throughput"]["mae_tok_s"]
         guidance = self.uncertainty_config.get("application_guidance", {})
 
         extrapolation_warning = None

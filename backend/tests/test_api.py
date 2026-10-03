@@ -44,15 +44,22 @@ async def test_complete_api_route_contract():
         assert len(benchmarks.json()) == 5
         assert all("peak_vram_gb" in row and "generation_tok_s" in row for row in benchmarks.json())
         assert all(row["source_type"] == "measured" and row["source_id"] == "amd_llm_lab_master.csv" for row in benchmarks.json())
-        assert all(row["confidence"] == 1 and row["data_coverage"] == 1 for row in benchmarks.json())
+        assert all("confidence" not in row and "data_coverage" not in row for row in benchmarks.json())
 
-        prediction = await test_client.post("/predict", json={"parameters_b": 7.615})
+        prediction = await test_client.post("/predict", json={
+            "parameters_b": 7.615,
+            "context_tokens": 4096,
+            "precision": "INT4",
+            "quantization": "qint4",
+            "backend": "Transformers + Optimum Quanto",
+        })
         assert prediction.status_code == 200
         prediction_body = prediction.json()
         assert prediction_body["prediction_type"] == "measured"
         assert prediction_body["source_type"] == "measured"
-        assert prediction_body["confidence"] == 1.0
         assert prediction_body["training_dataset"] == "amd_llm_lab_master.csv"
+        assert prediction_body["vram_source_type"] == "measured"
+        assert prediction_body["throughput_source_type"] == "measured"
         assert prediction_body["prediction"]["vram_gb"] > 0
         assert prediction_body["prediction"]["throughput_tok_s"] >= 0
         assert prediction_body["model_version"] == "1.5.0"
@@ -66,11 +73,16 @@ async def test_complete_api_route_contract():
         })
         assert interpolated.status_code == 200
         assert interpolated.json()["prediction_type"] == "interpolated"
-        assert 0 < interpolated.json()["data_coverage"] <= 1
+        assert interpolated.json()["source_count"] > 0
         assert "predictor_artifacts_v0.1.0" in interpolated.json()["source_id"]
         assert "estimation_v1.5.0" in interpolated.json()["source_id"]
 
-        recommendation = await test_client.post("/recommend", json={"available_vram_gb": 24})
+        recommendation = await test_client.post("/recommend", json={
+            "available_vram_gb": 24,
+            "minimum_throughput_tok_s": 0,
+            "context_tokens": 4096,
+            "objective": "throughput",
+        })
         assert recommendation.status_code == 200
         assert recommendation.json()["feasible_count"] > 0
         assert recommendation.json()["prediction_type"] == "estimated"
@@ -113,6 +125,7 @@ async def test_request_validation_and_resource_errors():
     async with await client() as test_client:
         invalid_requests = [
             {"parameters_b": 0},
+            {"parameters_b": 7.0},
             {"parameters_b": 7.0, "precision": "FP8"},
             {"parameters_b": 7.0, "backend": "Unknown backend"},
             {"parameters_b": 7.0, "context_tokens": -1},
@@ -143,7 +156,11 @@ async def test_unexpected_errors_return_sanitized_500(monkeypatch):
 
     monkeypatch.setattr(api.predictor, "predict", fail_prediction)
     async with await client(raise_app_exceptions=False) as test_client:
-        response = await test_client.post("/predict", json={"parameters_b": 7.615})
+        response = await test_client.post("/predict", json={
+            "parameters_b": 7.615, "context_tokens": 4096,
+            "precision": "INT4", "quantization": "qint4",
+            "backend": "Transformers + Optimum Quanto",
+        })
         assert response.status_code == 500
         assert response.json()["error"]["code"] == "internal_error"
         assert "internal test detail" not in response.text

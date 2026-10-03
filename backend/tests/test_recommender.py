@@ -26,6 +26,7 @@ def test_recommender_returns_empty_list_when_constraints_are_impossible():
     result = Recommender(ROOT).recommend(RecommendationInput(
         available_vram_gb=1,
         minimum_throughput_tok_s=10000,
+        context_tokens=4096,
         objective="balanced",
     ))
 
@@ -33,7 +34,9 @@ def test_recommender_returns_empty_list_when_constraints_are_impossible():
     assert result.feasible_count == 0
     assert len(result.candidate_configurations) == 36
     assert {row.source_type for row in result.candidate_configurations} <= {"measured", "estimated", "interpolated"}
-    assert all(0 <= row.confidence <= 1 and 0 <= row.data_coverage <= 1 for row in result.candidate_configurations)
+    assert all(row.source_count > 0 for row in result.candidate_configurations)
+    assert all(row.vram_source_type in {"measured", "estimated", "interpolated"} for row in result.candidate_configurations)
+    assert all(row.throughput_source_type in {"measured", "estimated", "interpolated"} for row in result.candidate_configurations)
 
 
 def test_recommendation_uses_measured_rows_and_returns_estimates_for_unmeasured():

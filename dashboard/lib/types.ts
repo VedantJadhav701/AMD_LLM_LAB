@@ -11,8 +11,8 @@ export type HardwareInfo = {
   gpu: string;
   vram_gb: number;
   architecture: string;
-  rocm: string;
-  pytorch: string;
+  rocm: string | null;
+  pytorch: string | null;
 };
 
 export type LocalHardwareInfo = {
@@ -45,15 +45,11 @@ export type BenchmarkRecord = {
   source_file: string;
   source_type: "measured";
   source_id: string;
-  confidence: number;
-  data_coverage: number;
-  source_count: number;
 };
 
 export type PredictionRequest = {
   parameters_b: number;
   context_tokens: number;
-  gpu_vram_gb?: number;
   precision: string;
   quantization: string;
   backend: string;
@@ -73,9 +69,9 @@ export type PredictionResponse = {
   training_dataset: string;
   source_type: "measured" | "estimated" | "interpolated";
   source_id: string;
-  confidence: number;
-  data_coverage: number;
   source_count: number;
+  vram_source_type: "measured" | "estimated" | "interpolated";
+  throughput_source_type: "measured" | "estimated" | "interpolated";
 };
 
 export type RecommendationConfiguration = {
@@ -97,9 +93,9 @@ export type RecommendationRow = RecommendationConfiguration & {
   throughput_mae_tok_s: number;
   source_type: "measured" | "estimated" | "interpolated";
   source_id: string;
-  confidence: number;
-  data_coverage: number;
   source_count: number;
+  vram_source_type: "measured" | "estimated" | "interpolated";
+  throughput_source_type: "measured" | "estimated" | "interpolated";
 };
 
 export type RecommendationResponse = {

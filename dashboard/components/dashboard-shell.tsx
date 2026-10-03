@@ -2,48 +2,184 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, BarChart3, Cpu, Database, Gauge, LayoutDashboard, Microscope, Server, Settings2 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  BarChart3,
+  ChevronDown,
+  Cpu,
+  Database,
+  Gauge,
+  Github,
+  Layers,
+  LayoutDashboard,
+  Microscope,
+  Server,
+  Settings2,
+} from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
 
-const routes = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/predictor", label: "Predictor", icon: Gauge },
-  { href: "/recommender", label: "Recommender", icon: Settings2 },
+const repo = "https://github.com/VedantJadhav701/AMD_LLM_LAB";
+
+const primaryNav = [
+  { href: "/lab", label: "Overview", icon: LayoutDashboard },
   { href: "/benchmarks", label: "Benchmarks", icon: Database },
-  { href: "/device", label: "My Device", icon: Server },
-  { href: "/quantization", label: "Quantization", icon: Microscope },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/device", label: "Hardware", icon: Server },
+  { href: "/analytics", label: "Research", icon: Microscope },
+];
+
+const secondaryNav = [
+  { href: "/predictor", label: "Predictor", icon: Gauge, desc: "Size and throughput estimation" },
+  { href: "/recommender", label: "Recommender", icon: Settings2, desc: "Constraint-driven planning" },
+  { href: "/device", label: "My device", icon: Server, desc: "Local hardware evaluation" },
+  { href: "/benchmarks", label: "MI300X", icon: Database, desc: "Raw measured benchmark data" },
+  { href: "/quantization", label: "Quantization", icon: Layers, desc: "Precision and format analysis" },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, desc: "Scaling and error validation" },
 ];
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [datasetRows, setDatasetRows] = useState<number | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    if (pathname === "/") return;
     let active = true;
-    const check = () => api.health().then(() => active && setApiStatus("online")).catch(() => active && setApiStatus("offline"));
+    const check = () =>
+      api
+        .health()
+        .then((health) => {
+          if (!active) return;
+          setApiStatus("online");
+          setDatasetRows(health.dataset_rows);
+          setVersion(health.model_version);
+        })
+        .catch(() => active && setApiStatus("offline"));
     check();
     const interval = window.setInterval(check, 30000);
-    return () => { active = false; window.clearInterval(interval); };
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
-  const activeRoute = routes.find((route) => route.href === pathname) ?? routes[0];
-  const statusText = apiStatus === "online" ? "API connected" : apiStatus === "offline" ? "API offline" : "Connecting";
-  const navLinks = (mobile = false) => routes.map(({ href, label, icon: Icon }) => {
-    const selected = pathname === href;
-    return <Link key={href} href={href} aria-current={selected ? "page" : undefined} className={`${mobile ? "shrink-0" : ""} flex items-center gap-2.5 rounded px-3 py-2.5 text-[12px] transition ${selected ? "bg-[#25332e] text-white" : "text-[#99a6a0] hover:bg-[#1a2420] hover:text-white"}`}><Icon size={15} strokeWidth={1.8} /><span>{label}</span>{selected && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--green)]" />}</Link>;
-  });
+  // The landing page renders its own header and footer.
+  if (pathname === "/") return <>{children}</>;
 
-  return <div className="min-h-screen md:grid md:grid-cols-[220px_minmax(0,1fr)]">
-    <aside className="sticky top-0 hidden h-screen min-h-screen flex-col border-r border-[var(--line)] bg-[var(--sidebar)] px-3 py-4 md:flex">
-      <Link href="/" className="mb-8 flex items-center gap-3 px-2" aria-label="AMD LLM Lab home"><span className="flex h-9 w-9 items-center justify-center rounded border border-[#643238] bg-[#361f22] text-[var(--red)]"><Cpu size={18} /></span><span><span className="block text-sm font-bold tracking-[0.04em] text-white">AMD LLM LAB</span><span className="mt-0.5 block text-[9px] uppercase tracking-[0.12em] text-[#899691]">Inference research</span></span></Link>
-      <p className="mb-2 px-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#77847f]">Workspace</p><nav aria-label="Main navigation" className="grid gap-1">{navLinks()}</nav>
-      <div className="mt-auto rounded border border-[var(--line)] bg-[#141b19] px-3 py-3"><div className="flex items-center gap-2 text-[11px] text-[#c4cecd]"><span className={`h-1.5 w-1.5 rounded-full ${apiStatus === "online" ? "bg-[var(--green)]" : "bg-[var(--amber)]"}`} />MI300X benchmark host</div><p className="mt-1.5 pl-3.5 text-[9px] leading-4 text-[#8f9c9d]">57 measured records · {statusText}</p></div>
-    </aside>
-    <div className="min-w-0">
-      <div className="border-b border-[var(--line)] bg-[var(--sidebar)] px-4 py-3 md:hidden"><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded border border-[#643238] bg-[#361f22] text-[var(--red)]"><Cpu size={16} /></span><span className="text-sm font-bold">AMD LLM LAB</span><span className="ml-auto flex items-center gap-1.5 text-[9px] text-[var(--muted)]"><span className={`h-1.5 w-1.5 rounded-full ${apiStatus === "online" ? "bg-[var(--green)]" : "bg-[var(--amber)]"}`} />{statusText}</span></div><nav aria-label="Main navigation" className="mt-3 flex gap-1 overflow-x-auto pb-0.5">{navLinks(true)}</nav></div>
-      <header className="sticky top-0 z-20 hidden min-h-14 items-center justify-between gap-4 border-b border-[var(--line)] bg-[#101615]/95 px-4 backdrop-blur md:flex md:px-7"><div className="flex min-w-0 items-center gap-2 text-xs text-[var(--muted)]"><Activity size={14} className="text-[var(--green)]" /><span>AMD LLM Lab</span><span className="text-[#53615c]">/</span><span className="truncate font-medium text-[var(--ink)]">{activeRoute.label}</span></div><div className="flex shrink-0 items-center gap-4 text-[10px]"><span className="flex items-center gap-1.5 text-[var(--muted)]"><span className={`h-1.5 w-1.5 rounded-full ${apiStatus === "online" ? "bg-[var(--green)]" : apiStatus === "offline" ? "bg-[var(--red)]" : "bg-[var(--amber)]"}`} />{statusText}</span><span className="hidden text-[var(--muted)] lg:block">Local research workspace</span><span className="rounded border border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-[var(--muted)]">v1.5.0</span></div></header>
-      <main className="mx-auto w-full max-w-[1560px] px-4 py-5 sm:px-5 md:px-7 md:py-7">{children}</main>
+  const statusText = apiStatus === "online" ? "API connected" : apiStatus === "offline" ? "API offline" : "Connecting";
+  const dot = apiStatus === "online" ? "#10b981" : apiStatus === "offline" ? "#ef4444" : "#eab308";
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <div className="app-bar">
+          <Link href="/" className="app-brand brand-lockup" aria-label="AMD LLM Lab home">
+            <span className="amd-mark" aria-hidden="true">
+              AMD<span />
+            </span>
+            <span className="brand-divider" />
+            <span className="brand-name">LLM Lab</span>
+          </Link>
+
+          <nav aria-label="Primary" className="app-nav">
+            {primaryNav.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={`${href}-${label}`}
+                href={href}
+                aria-current={pathname === href ? "page" : undefined}
+                className="app-nav-item"
+              >
+                <Icon size={16} />
+                {label}
+              </Link>
+            ))}
+
+            <div className="tools-wrap" ref={menuRef}>
+              <button
+                type="button"
+                className="app-nav-item"
+                aria-expanded={menuOpen}
+                aria-haspopup="true"
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                <Gauge size={16} />
+                Tools
+                <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : undefined, transition: "transform .15s ease" }} />
+              </button>
+
+              {menuOpen && (
+                <div className="tools-menu">
+                  <div className="tools-menu-title">Research and inference tools</div>
+                  {secondaryNav.map(({ href, label, icon: Icon, desc }) => (
+                    <Link
+                      key={`sub-${href}-${label}`}
+                      href={href}
+                      onClick={() => setMenuOpen(false)}
+                      aria-current={pathname === href ? "page" : undefined}
+                      className="tools-link"
+                    >
+                      <Icon size={16} />
+                      <span>
+                        <b>{label}</b>
+                        <small>{desc}</small>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+
+          <div className="app-side">
+            <span className="hw-tag">
+              <Cpu size={14} style={{ color: "var(--cyan)" }} />
+              Instinct MI300X, 192 GB HBM3
+            </span>
+            <div className="status-pill" role="status">
+              <i style={{ background: dot, boxShadow: `0 0 8px ${dot}` }} />
+              <span>{statusText}</span>
+              <hr />
+              <span>{datasetRows == null ? "57 rows" : `${datasetRows} rows`}</span>
+            </div>
+            <span className="version-tag">{version ?? "v1.5.0"}</span>
+            <a className="icon-btn" href={repo} target="_blank" rel="noreferrer" aria-label="GitHub repository">
+              <Github size={17} />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="app-main">{children}</main>
+
+      <footer className="app-footer">
+        <div className="app-footer-in">
+          <p>AMD LLM Lab is an independent open-source research platform, not an official AMD product.</p>
+          <nav aria-label="Footer">
+            <Link href="/lab">Overview</Link>
+            <Link href="/benchmarks">Benchmarks</Link>
+            <Link href="/device">Hardware</Link>
+            <Link href="/predictor">Predictor</Link>
+            <a href={repo} target="_blank" rel="noreferrer">GitHub</a>
+          </nav>
+        </div>
+      </footer>
     </div>
-  </div>;
+  );
 }

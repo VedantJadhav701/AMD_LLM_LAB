@@ -56,9 +56,9 @@ class Recommender:
                     "meets_throughput": throughput >= request.minimum_throughput_tok_s,
                     "source_type": estimate["source_type"],
                     "source_id": estimate["source_id"],
-                    "confidence": estimate["confidence"],
-                    "data_coverage": estimate["data_coverage"],
                     "source_count": estimate["source_count"],
+                    "vram_source_type": estimate["vram_source_type"],
+                    "throughput_source_type": estimate["throughput_source_type"],
                 })
 
         def rank(items):
@@ -86,15 +86,15 @@ class Recommender:
         feasible = [item for item in candidates if item["fits_vram"] and item["meets_throughput"]]
 
         uncertainty = self.predictor.uncertainty_config
-        vram_mae = uncertainty.get("vram", {}).get("mae_gb", 7.58)
-        throughput_mae = uncertainty.get("throughput", {}).get("mae_tok_s", 12.01)
+        vram_mae = uncertainty["vram"]["mae_gb"]
+        throughput_mae = uncertainty["throughput"]["mae_tok_s"]
         ranked_all = [ConfigurationRecommendation(rank=index, vram_mae_gb=vram_mae,
                       throughput_mae_tok_s=throughput_mae, **candidate)
                       for index, candidate in enumerate(candidates, start=1)]
         ranked_feasible = [row.model_copy(update={"rank": index}) for index, row in enumerate(
             (row for row in ranked_all if row.fits_vram and row.meets_throughput), start=1
         )]
-        warning = self.metadata.get("warning", "Predictions are estimates; validate important decisions with real benchmarks.")
+        warning = self.metadata["warning"]
         return RecommendationOutput(
             feasible_configurations=ranked_feasible,
             total_candidates_evaluated=len(self.model_sizes) * len(configurations),
