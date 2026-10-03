@@ -119,7 +119,7 @@ input::placeholder { color: #666; }
 /* =====================================================================
    LANDING
 ===================================================================== */
-.landing-shell { min-height: 100vh; overflow-x: hidden; background: var(--paper); color: var(--ink); }
+.landing-shell { min-height: 100vh; overflow-x: clip; background: var(--paper); color: var(--ink); }
 
 .lp-header {
   position: sticky; top: 0; z-index: 50;
@@ -283,6 +283,7 @@ input::placeholder { color: #666; }
 
 /* setup */
 .setup { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(32px, 7vw, 120px); }
+.setup > *, .split > *, .steps, .step, .code { min-width: 0; }
 .setup-intro { position: sticky; top: calc(var(--header-h) + 32px); align-self: start; }
 .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
 .step { position: relative; padding: 0 0 40px 64px; counter-increment: step; }
@@ -379,14 +380,14 @@ input::placeholder { color: #666; }
 @media (min-width: 1280px) { .hw-tag { display: flex; } }
 
 @media (max-width: 960px) {
-  .split, .setup { grid-template-columns: 1fr; }
+  .split, .setup { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   .setup-intro { position: static; }
   .data-strip { grid-template-columns: repeat(2, 1fr); padding: 0 var(--gutter); }
   .data-cell { padding: 24px 16px; border-left: 0; border-top: 1px solid var(--line); }
   .data-cell:nth-child(even) { border-left: 1px solid var(--line); padding-left: 20px; }
   .data-cell:nth-child(odd) { padding-left: 0; }
   .data-cell:nth-child(1), .data-cell:nth-child(2) { border-top: 0; }
-  .tiles, .evidence { grid-template-columns: 1fr; }
+  .tiles, .evidence { grid-template-columns: minmax(0, 1fr); }
   .evidence article + article { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); margin-top: 20px; padding-top: 28px; }
   .tile { min-height: 260px; }
   .research-page .metric-strip { grid-template-columns: repeat(2, 1fr); }
@@ -400,7 +401,8 @@ input::placeholder { color: #666; }
   .hero-actions { margin-top: 18px; gap: 10px; }
   .hero-actions .btn { width: 100%; justify-content: center; min-height: 44px; }
   .hero-meta { margin-top: 12px; font-size: 12px; }
-  .hero-video { min-height: 180px; max-height: 240px; margin-top: 12px; object-fit: cover; }
+  /* crop the animation to its lower part (the scene sits at the bottom of the frame) so no empty paper sits between the copy and the artwork */
+  .hero-video { flex: none; width: 100%; height: clamp(150px, 46vw, 260px); min-height: 0; max-height: none; margin-top: -8px; object-fit: cover; object-position: 50% 100%; }
   .lp-menu { display: inline-flex; }
   .lp-header-in { gap: 12px; }
   .lp-nav {
@@ -412,11 +414,18 @@ input::placeholder { color: #666; }
   .lp-actions .btn { display: none; }
   .section { padding: 44px var(--gutter); }
   .section h2 { font-size: clamp(28px, 6.5vw, 40px); }
-  .measure { grid-template-columns: 1fr; margin-top: 32px; }
+  .measure { grid-template-columns: minmax(0, 1fr); margin-top: 32px; }
   .measure > * { border-left: 0; border-top: 1px solid var(--line); padding: 24px 16px; }
   .measure > *:first-child { border-top: 0; }
   .vary > div { grid-template-columns: 1fr; gap: 4px; }
-  .device-facts { grid-template-columns: 1fr; }
+  .device-facts { grid-template-columns: minmax(0, 1fr); }
+  .device-top { flex-wrap: wrap; }
+  .oss { padding: 48px var(--gutter); }
+  .oss h2 { max-width: none; font-size: clamp(30px, 8vw, 42px); }
+  .oss p { font-size: 15px; }
+  /* copy button moves under the code so it never covers a command */
+  .code pre { padding: 16px 16px 10px; }
+  .copy { position: static; display: flex; margin: 0 10px 10px auto; }
   .app-side { margin-left: 0; width: 100%; padding-bottom: 12px; flex-wrap: wrap; }
   .tools-menu { width: min(340px, calc(100vw - 40px)); }
 }
@@ -425,5 +434,8 @@ input::placeholder { color: #666; }
   .hero-actions .btn, .oss-actions .btn, .setup-cta .btn { width: 100%; }
   .data-cell strong { font-size: 28px; }
   .data-cell span { font-size: 12px; }
-  .step { padding-left: 0; }
+  .step { padding-left: 52px; padding-bottom: 32px; }
+  .step::before { width: 34px; height: 34px; font-size: 17px; }
+  .step::after { left: 16.5px; top: 40px; }
+  .step h3 { font-size: 18px; padding-top: 4px; }
 }
