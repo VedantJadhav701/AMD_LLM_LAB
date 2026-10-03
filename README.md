@@ -11,12 +11,19 @@
 </p>
 
 <p align="center">
+  <a href="https://amd-llm-lab.vercel.app/"><img src="https://img.shields.io/badge/Live%20Demo-amd--llm--lab.vercel.app-00c2de?logo=vercel&style=flat-square" alt="Live Demo"></a>
+  <a href="https://vedantjadhav.hashnode.dev/amd-llm-lab"><img src="https://img.shields.io/badge/Article-Hashnode-2962ff?logo=hashnode&style=flat-square" alt="Technical Breakdown"></a>
   <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><img src="https://img.shields.io/badge/GitHub-VedantJadhav701%2FAMD__LLM__LAB-00c2de?logo=github&style=flat-square" alt="GitHub Repository"></a>
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Frontend-Next.js%2016%20App%20Router-000000?logo=next.js&style=flat-square" alt="Next.js 16"></a>
-  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/Backend-FastAPI%200.109-009688?logo=fastapi&style=flat-square" alt="FastAPI"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Frontend-Next.js%2016-000000?logo=next.js&style=flat-square" alt="Next.js 16"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&style=flat-square" alt="FastAPI"></a>
   <a href="https://rocm.docs.amd.com/"><img src="https://img.shields.io/badge/Hardware-AMD%20ROCm%20%7C%20MI300X-ed1c24?logo=amd&style=flat-square" alt="AMD ROCm"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License"></a>
-  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/pulls"><img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome"></a>
+</p>
+
+<p align="center">
+  <a href="https://amd-llm-lab.vercel.app/"><strong>🌐 Live Demo</strong></a> &nbsp;|&nbsp;
+  <a href="https://vedantjadhav.hashnode.dev/amd-llm-lab"><strong>📝 Technical Breakdown</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><strong>💻 GitHub Repository</strong></a>
 </p>
 
 ---
@@ -227,6 +234,14 @@ Whether you want to add new measured benchmark rows, improve prediction models, 
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
 4. Push to your branch (`git push origin feature/amazing-feature`).
 5. Open a **Pull Request**.
+
+---
+
+## 🔗 Links & Resources
+
+- 🌐 **Live Demo Platform**: [amd-llm-lab.vercel.app](https://amd-llm-lab.vercel.app/)
+- 📝 **Technical Breakdown Article**: [vedantjadhav.hashnode.dev/amd-llm-lab](https://vedantjadhav.hashnode.dev/amd-llm-lab)
+- 💻 **GitHub Repository**: [github.com/VedantJadhav701/AMD_LLM_LAB](https://github.com/VedantJadhav701/AMD_LLM_LAB)
 
 ---
 
