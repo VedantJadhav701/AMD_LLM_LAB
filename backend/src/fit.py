@@ -151,6 +151,13 @@ def estimate_fit(request: FitRequest, spec: ModelSpec, params_source: str, name:
     kv_per_token = 2 * spec.layers * spec.kv_heads * spec.head_dim * request.kv_cache_bytes * request.batch_size / 1e9
     kv_cache = kv_per_token * request.context_tokens
     overhead = request.runtime_overhead_gb
+    if request.device_vram_gb and request.runtime_overhead_gb == DEFAULT_OVERHEAD_GB:
+        if request.device_vram_gb <= 4.0:
+            overhead = 0.4
+        elif request.device_vram_gb <= 8.0:
+            overhead = 0.8
+        elif request.device_vram_gb <= 16.0:
+            overhead = 1.5
     total = weights + kv_cache + overhead
 
     warnings: list[str] = []

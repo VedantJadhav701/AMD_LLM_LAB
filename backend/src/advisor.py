@@ -10,9 +10,16 @@ from src import hub
 router = APIRouter(tags=["advisor"])
 
 DEFAULT_CATALOG = [
-    {"name": "meta-llama/Meta-Llama-3-8B-Instruct", "spec": ModelSpec(params_b=8.03, layers=32, kv_heads=8, head_dim=128, max_context_tokens=8192)},
+    {"name": "Qwen/Qwen2.5-0.5B-Instruct", "spec": ModelSpec(params_b=0.49, layers=24, kv_heads=2, head_dim=64, max_context_tokens=32768)},
+    {"name": "meta-llama/Llama-3.2-1B-Instruct", "spec": ModelSpec(params_b=1.23, layers=16, kv_heads=8, head_dim=64, max_context_tokens=131072)},
+    {"name": "Qwen/Qwen2.5-1.5B-Instruct", "spec": ModelSpec(params_b=1.54, layers=28, kv_heads=2, head_dim=128, max_context_tokens=32768)},
+    {"name": "google/gemma-2-2b-it", "spec": ModelSpec(params_b=2.61, layers=26, kv_heads=4, head_dim=256, max_context_tokens=8192)},
+    {"name": "Qwen/Qwen2.5-3B-Instruct", "spec": ModelSpec(params_b=3.09, layers=36, kv_heads=2, head_dim=128, max_context_tokens=32768)},
+    {"name": "meta-llama/Llama-3.2-3B-Instruct", "spec": ModelSpec(params_b=3.21, layers=28, kv_heads=8, head_dim=128, max_context_tokens=131072)},
+    {"name": "microsoft/Phi-3.5-mini-instruct", "spec": ModelSpec(params_b=3.82, layers=32, kv_heads=32, head_dim=96, max_context_tokens=131072)},
     {"name": "mistralai/Mistral-7B-Instruct-v0.3", "spec": ModelSpec(params_b=7.24, layers=32, kv_heads=8, head_dim=128, max_context_tokens=32768)},
     {"name": "Qwen/Qwen2.5-7B-Instruct", "spec": ModelSpec(params_b=7.61, layers=28, kv_heads=4, head_dim=128, max_context_tokens=32768)},
+    {"name": "meta-llama/Meta-Llama-3-8B-Instruct", "spec": ModelSpec(params_b=8.03, layers=32, kv_heads=8, head_dim=128, max_context_tokens=8192)},
     {"name": "Qwen/Qwen2.5-14B-Instruct", "spec": ModelSpec(params_b=14.7, layers=48, kv_heads=8, head_dim=128, max_context_tokens=32768)},
     {"name": "Qwen/Qwen2.5-32B-Instruct", "spec": ModelSpec(params_b=32.5, layers=64, kv_heads=8, head_dim=128, max_context_tokens=32768)},
     {"name": "meta-llama/Meta-Llama-3-70B-Instruct", "spec": ModelSpec(params_b=70.55, layers=80, kv_heads=8, head_dim=128, max_context_tokens=8192)},
