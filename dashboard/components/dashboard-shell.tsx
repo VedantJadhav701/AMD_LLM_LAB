@@ -12,6 +12,9 @@ import {
   Layers,
   LayoutDashboard,
   Microscope,
+  Ruler,
+  Sparkles,
+  Users,
   Server,
   Settings2,
 } from "lucide-react";
@@ -22,6 +25,9 @@ const repo = "https://github.com/VedantJadhav701/AMD_LLM_LAB";
 
 const primaryNav = [
   { href: "/lab", label: "Overview", icon: LayoutDashboard },
+  { href: "/advisor", label: "Advisor", icon: Sparkles },
+  { href: "/fit", label: "Will it fit?", icon: Ruler },
+  { href: "/hub", label: "Community", icon: Users },
   { href: "/benchmarks", label: "Benchmarks", icon: Database },
   { href: "/device", label: "Hardware", icon: Server },
   { href: "/analytics", label: "Research", icon: Microscope },

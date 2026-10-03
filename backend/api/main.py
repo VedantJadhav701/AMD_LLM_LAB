@@ -1,5 +1,6 @@
 """FastAPI service for the AMD LLM Lab predictors and benchmark data."""
 
+from contextlib import asynccontextmanager
 import json
 import csv
 import logging
@@ -19,6 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src import advisor, hub
+from src.fit import router as fit_router
 from src.predictor import Predictor
 from src.recommender import Recommender
 from src.schemas import (
@@ -43,7 +46,16 @@ DATASET = pd.read_csv(ROOT_DIR / "data" / "amd_llm_lab_master.csv")
 estimator = recommender.estimator
 logger = logging.getLogger("amd_llm_lab.api")
 
-app = FastAPI(title="AMD LLM Lab API", version=predictor.version.lstrip("v"))
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Idempotent: loads the MI300X reference runs into the community hub on first start.
+    hub.seed_reference(ROOT_DIR / "data" / "amd_llm_lab_master.csv")
+    yield
+
+
+app = FastAPI(title="AMD LLM Lab API", version=predictor.version.lstrip("v"), lifespan=lifespan)
 origins = [origin.strip() for origin in os.getenv("AMD_LLM_LAB_CORS_ORIGINS", "*").split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +64,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(fit_router)
+app.include_router(hub.router)
+app.include_router(advisor.router)
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Invalid request"},
@@ -149,6 +165,8 @@ def hardware():
 @app.get("/hardware/local", response_model=LocalHardwareInfo, responses={500: {"model": ErrorResponse}})
 def local_hardware():
     """Inspect the machine running this FastAPI process, not the remote browser."""
+    if os.getenv("AMD_LLM_LAB_DISABLE_LOCAL_PROBE") == "1":  # set on any public deployment
+        raise HTTPException(status_code=404, detail="Local hardware probing is disabled on this server.")
     try:
         import psutil
         virtual_memory = psutil.virtual_memory()

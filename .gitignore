@@ -12,9 +12,12 @@ dashboard/out/
 dashboard/coverage/
 .npm-cache/
 tmp*.bat
+backend/data/hub.sqlite
 
 # Temporary scratch & image artifacts
 *.png
+*.jpeg
+*.jpg
 claude files/
 amd_website/
 AGY_SESSION.MD
