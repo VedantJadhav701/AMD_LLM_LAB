@@ -48,3 +48,19 @@ def test_nearby_parameter_count_is_not_mislabeled_as_an_exact_measurement():
     assert result["source_type"] in {"estimated", "interpolated"}
     assert result["vram_source_type"] != "measured"
     assert result["throughput_source_type"] != "measured"
+
+
+def test_exact_catalog_parameter_count_resolves_to_measured_data():
+    dataset = pd.read_csv(ROOT / "data" / "amd_llm_lab_master.csv")
+    request = PredictionRequest(
+        parameters_b=7.615,
+        context_tokens=4096,
+        precision="INT4",
+        quantization="qint4",
+        backend="Transformers + Optimum Quanto",
+    )
+
+    result = EstimationEngine(Predictor(ROOT), dataset).estimate(request)
+
+    assert result["source_type"] == "measured"
+    assert result["source_id"] == "amd_llm_lab_master.csv"

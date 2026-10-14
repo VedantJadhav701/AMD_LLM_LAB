@@ -11,16 +11,16 @@ class PredictionRequest(BaseModel):
 
     parameters_b: float = Field(
         ...,
-        ge=0.5,
-        le=32.76,
-        description="Model parameter count in billions within the benchmarked range",
+        gt=0,
+        le=500.0,
+        description="Model parameter count in billions; values outside 0.5B-32.76B are extrapolated",
         json_schema_extra={"example": 14.77}
     )
     context_tokens: int = Field(
         ...,
         gt=0,
-        le=8192,
-        description="Target context window in tokens (e.g. 512, 1024, 2048, 4096, 8192)",
+        le=131072,
+        description="Target context window in tokens; values above 8192 are extrapolated",
         json_schema_extra={"example": 4096}
     )
     precision: Literal["BF16", "FP16", "INT8", "INT4", "INT2"] = Field(
@@ -106,8 +106,8 @@ class RecommendationRequest(BaseModel):
     context_tokens: int = Field(
         ...,
         gt=0,
-        le=8192,
-        description="Desired context token length",
+        le=131072,
+        description="Desired context token length; values above 8192 are extrapolated",
         json_schema_extra={"example": 4096}
     )
     objective: Literal["throughput", "memory", "balanced"] = Field(

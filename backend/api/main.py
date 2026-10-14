@@ -51,6 +51,7 @@ logger = logging.getLogger("amd_llm_lab.api")
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Idempotent: loads the MI300X reference runs into the community hub on first start.
+    hub.init_db()
     hub.seed_reference(ROOT_DIR / "data" / "amd_llm_lab_master.csv")
     yield
 
@@ -198,20 +199,45 @@ def local_hardware():
                        "vendor": "NVIDIA", "detection_method": "nvidia-smi"}
         except (OSError, subprocess.SubprocessError, ValueError, StopIteration):
             pass
+    amd_smi = shutil.which("amd-smi")
     rocm_smi = shutil.which("rocm-smi")
     if not gpu["available"] and rocm_smi:
         try:
             probe = subprocess.run([rocm_smi, "--showproductname", "--showmeminfo", "vram"],
                                    capture_output=True, text=True, timeout=3, check=True)
             output = probe.stdout
-            name_match = re.search(r"Card series:\s*(.+)", output, re.IGNORECASE)
-            total_match = re.search(r"Total Memory \(B\):\s*(\d+)", output, re.IGNORECASE)
-            if name_match:
+            name_match = re.search(r"Card\s+(?:series|model):\s*(.+)", output, re.IGNORECASE)
+            total_match = re.search(r"(?:VRAM )?Total Memory \(B\):\s*(\d+)", output, re.IGNORECASE)
+            used_match = re.search(r"(?:VRAM )?Total Used Memory \(B\):\s*(\d+)", output, re.IGNORECASE)
+            if name_match or total_match:
                 total = int(total_match.group(1)) / (1024 ** 3) if total_match else None
-                gpu = {"available": True, "name": name_match.group(1).strip(),
-                       "vram_gb": round(total, 2) if total else None,
-                       "vram_free_gb": None, "vendor": "AMD",
+                used = int(used_match.group(1)) / (1024 ** 3) if used_match else None
+                free = max(0.0, total - used) if total is not None and used is not None else None
+                gpu = {"available": True, "name": name_match.group(1).strip() if name_match else "AMD ROCm GPU",
+                       "vram_gb": round(total, 2) if total is not None else None,
+                       "vram_free_gb": round(free, 2) if free is not None else None, "vendor": "AMD",
                        "detection_method": "rocm-smi"}
+        except (OSError, subprocess.SubprocessError, ValueError):
+            pass
+
+    if not gpu["available"] and amd_smi:
+        try:
+            probe = subprocess.run([amd_smi, "list", "--json"], capture_output=True, text=True, timeout=3, check=True)
+            devices = json.loads(probe.stdout)
+            first = next(iter(devices.values())) if isinstance(devices, dict) else devices[0]
+            gpu = {"available": True, "name": first.get("product_name") or "AMD GPU",
+                   "vram_gb": None, "vram_free_gb": None, "vendor": "AMD", "detection_method": "amd-smi"}
+        except (OSError, subprocess.SubprocessError, ValueError, IndexError, KeyError, TypeError, json.JSONDecodeError):
+            pass
+
+    if not gpu["available"] and system == "Darwin":
+        try:
+            memory_probe = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=2, check=True)
+            shared_gb = round(int(memory_probe.stdout.strip()) / (1024 ** 3), 2)
+            display_probe = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True, timeout=3, check=True)
+            name_match = re.search(r"Chipset Model:\s*(.+)", display_probe.stdout, re.IGNORECASE)
+            gpu = {"available": True, "name": name_match.group(1).strip() if name_match else "Apple Silicon GPU",
+                   "vram_gb": shared_gb, "vram_free_gb": None, "vendor": "Apple", "detection_method": "system_profiler"}
         except (OSError, subprocess.SubprocessError, ValueError):
             pass
 
@@ -231,8 +257,8 @@ def benchmarks(
     precision: Optional[Literal["BF16", "FP16", "INT8", "INT4", "INT2"]] = None,
     quantization: Optional[Literal["none", "qint8", "qint4", "qint2"]] = None,
     backend: Optional[Literal["Transformers", "Optimum Quanto", "Transformers + Optimum Quanto"]] = None,
-    context: Optional[int] = Query(default=None, gt=0, le=8192),
-    context_tokens: Optional[int] = Query(default=None, gt=0, le=8192, include_in_schema=False),
+    context: Optional[int] = Query(default=None, gt=0, le=131072),
+    context_tokens: Optional[int] = Query(default=None, gt=0, le=131072, include_in_schema=False),
     parameters_b: Optional[float] = Query(default=None, gt=0),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),

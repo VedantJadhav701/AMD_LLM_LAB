@@ -150,9 +150,10 @@ export default function FitPage() {
               )}
 
               <div className="relative h-9 border border-[var(--line)] bg-[var(--surface-2)]" role="img" aria-label="Memory breakdown">
-                <div className="flex h-full" style={{ width: pct(result.total_gb) }}>
+                <div className="flex h-full w-full">
                   <div style={{ width: pct(result.weights_gb), background: "var(--cyan)" }} title="Weights" />
                   <div style={{ width: pct(result.kv_cache_gb), background: "#7be3f3" }} title="KV cache" />
+                  <div style={{ width: pct(result.activation_buffer_gb), background: "#b7d6a6" }} title="Prefill activation buffer" />
                   <div style={{ width: pct(result.overhead_gb), background: "#4b5057" }} title="Overhead" />
                 </div>
                 <div className="absolute inset-y-0 border-r-2 border-white" style={{ left: pct(vram) }} title={`GPU memory: ${vram} GB`} />
@@ -160,6 +161,7 @@ export default function FitPage() {
               <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
                 <Item swatch="var(--cyan)" label="Weights" value={`${result.weights_gb} GB`} />
                 <Item swatch="#7be3f3" label="KV cache" value={`${result.kv_cache_gb} GB`} />
+                <Item swatch="#b7d6a6" label="Prefill buffer" value={`${result.activation_buffer_gb} GB`} />
                 <Item swatch="#4b5057" label="Overhead" value={`${result.overhead_gb} GB`} />
                 <Item label="GPU memory" value={`${vram} GB`} />
               </dl>

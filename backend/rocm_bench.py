@@ -87,7 +87,7 @@ def measure(args) -> list[dict]:
     if not torch.cuda.is_available():
         sys.exit("PyTorch cannot see a GPU. On AMD you need a ROCm build of PyTorch (torch.version.hip must be set).")
     props = torch.cuda.get_device_properties(0)
-    gb = 1e9
+    gb = 1024 ** 3
     hardware = {
         "gpu_name": props.name, "vram_gb": round(props.total_memory / gb, 2),
         "arch": getattr(props, "gcnArchName", None), "rocm_version": getattr(torch.version, "hip", None),
@@ -107,7 +107,10 @@ def measure(args) -> list[dict]:
     torch.cuda.empty_cache()
     torch.cuda.reset_peak_memory_stats()
     try:
-        model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=dtype).to("cuda").eval()
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model, torch_dtype=dtype, low_cpu_mem_usage=True,
+        ).to("cuda").eval()
+        torch.cuda.synchronize()
     except oom:
         print("Out of memory while loading. Recording that result.")
         return [build_payload(**base, model=model_info(args.assumed_params_b or 1.0), context=contexts[0],
@@ -132,7 +135,9 @@ def measure(args) -> list[dict]:
         return time.perf_counter() - start
 
     with torch.inference_mode():
-        generate(min(contexts), 8)  # warm-up: kernel compilation and allocator growth
+        for _ in range(args.warmups):
+            generate(min(contexts), min(8, args.output_tokens))
+        torch.cuda.synchronize()
         for ctx in contexts:
             try:
                 torch.cuda.reset_peak_memory_stats()
@@ -171,6 +176,7 @@ def main(argv=None):
     parser.add_argument("--output-tokens", type=int, default=128)
     parser.add_argument("--batch", type=int, default=1)
     parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--warmups", type=int, default=3, help="untimed warmup passes before measurement")
     parser.add_argument("--bandwidth", type=float, help="GPU memory bandwidth in GB/s if your card isn't known")
     parser.add_argument("--assumed-params-b", type=float, help="used only to record an out-of-memory load")
     parser.add_argument("--out", default="amd_llm_lab_results.json")
@@ -179,8 +185,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.submit and not args.api:
         parser.error("--submit needs --api")
-    if args.output_tokens < 2 or args.repeats < 1 or args.batch < 1:
-        parser.error("--output-tokens must be at least 2; --repeats and --batch at least 1")
+    if args.output_tokens < 2 or args.repeats < 1 or args.warmups < 3 or args.batch < 1:
+        parser.error("--output-tokens must be at least 2; --repeats and --batch at least 1; --warmups at least 3")
 
     payloads = measure(args)
     with open(args.out, "w", encoding="utf-8") as file:

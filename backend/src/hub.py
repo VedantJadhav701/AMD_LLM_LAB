@@ -144,17 +144,25 @@ def connect():
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, timeout=10)
     conn.row_factory = sqlite3.Row
-    conn.execute("""CREATE TABLE IF NOT EXISTS submissions(
-        id TEXT PRIMARY KEY, created_at TEXT NOT NULL, status TEXT NOT NULL, reference INTEGER NOT NULL DEFAULT 0,
-        gpu TEXT, model TEXT, precision TEXT, stack TEXT, batch INTEGER, context INTEGER, outcome TEXT,
-        decode_tok_s REAL, steady_vram_gb REAL, load_peak_vram_gb REAL, efficiency REAL,
-        reasons TEXT NOT NULL DEFAULT '[]', payload TEXT NOT NULL)""")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_sub_lookup ON submissions(status, model, context, gpu)")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
     try:
         yield conn
         conn.commit()
     finally:
         conn.close()
+
+
+def init_db() -> None:
+    """Create the hub schema once during application startup."""
+    with connect() as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS submissions(
+        id TEXT PRIMARY KEY, created_at TEXT NOT NULL, status TEXT NOT NULL, reference INTEGER NOT NULL DEFAULT 0,
+        gpu TEXT, model TEXT, precision TEXT, stack TEXT, batch INTEGER, context INTEGER, outcome TEXT,
+        decode_tok_s REAL, steady_vram_gb REAL, load_peak_vram_gb REAL, efficiency REAL,
+        reasons TEXT NOT NULL DEFAULT '[]', payload TEXT NOT NULL)""")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_sub_lookup ON submissions(status, model, context, gpu)")
 
 
 def bandwidth_for(hw: Hardware) -> Optional[float]:
@@ -201,6 +209,7 @@ def seed_reference(csv_path: Path) -> int:
     """Load the original MI300X dataset as verified reference runs. Safe to call repeatedly."""
     import pandas as pd
 
+    init_db()
     if not Path(csv_path).exists():
         return 0
     frame = pd.read_csv(csv_path)
@@ -224,17 +233,36 @@ def seed_reference(csv_path: Path) -> int:
     return added
 
 
-def measured_speed(gpu_like: str, model_id: str, precision: str, context: int, batch: int = 1) -> Optional[dict]:
-    """Median decode speed from accepted runs on a matching GPU, or None. Used by the advisor."""
+def measured_speed(
+    gpu_like: str, model_id: str, precision: str, context: Optional[int] = None, batch: int = 1,
+) -> Optional[dict]:
+    """Accepted matching measurements, with summary statistics for the advisor."""
+    sql = (
+        "SELECT decode_tok_s, status, stack FROM submissions "
+        "WHERE outcome='ok' AND status IN ('verified','community') "
+        "AND gpu LIKE ? AND model=? AND precision=? AND batch=?"
+    )
+    args: list[Any] = [f"%{gpu_like}%", model_id, precision.upper(), batch]
+    if context is not None:
+        sql += " AND context=?"
+        args.append(context)
     with connect() as conn:
-        rows = conn.execute(
-            "SELECT decode_tok_s, status, stack FROM submissions WHERE outcome='ok' AND status IN ('verified','community') "
-            "AND gpu LIKE ? AND model=? AND precision=? AND context=? AND batch=?",
-            (f"%{gpu_like}%", model_id, precision.upper(), context, batch)).fetchall()
+        rows = conn.execute(sql, args).fetchall()
     if not rows:
         return None
-    return {"tok_s": round(median(r["decode_tok_s"] for r in rows), 2), "runs": len(rows),
+    speeds = [float(row["decode_tok_s"]) for row in rows if row["decode_tok_s"] is not None]
+    if not speeds:
+        return None
+    value = round(median(speeds), 2)
+    return {"tok_s": value, "median": value, "min": round(min(speeds), 2), "max": round(max(speeds), 2), "runs": len(speeds),
             "verified": any(r["status"] == "verified" for r in rows), "stacks": sorted({r["stack"] for r in rows})}
+
+
+def median_speed_for(
+    gpu_name: str, model: str, precision: str, context: Optional[int] = None, batch: int = 1,
+) -> Optional[dict]:
+    """Compatibility wrapper retained for callers using the original advisor name."""
+    return measured_speed(gpu_name, model, precision, context=context, batch=batch)
 
 
 # ---------------------------------------------------------------- rate limit
@@ -244,10 +272,14 @@ _hits: dict[str, deque] = defaultdict(deque)
 
 def _rate_limit(request: Request):
     limit = int(os.getenv("AMD_LLM_LAB_SUBMIT_LIMIT", "60"))
-    who = request.client.host if request.client else "unknown"
+    forwarded = request.headers.get("x-forwarded-for")
+    who = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
     now, window = time.time(), _hits[who]
     while window and window[0] < now - 3600:
         window.popleft()
+    if not window:
+        _hits.pop(who, None)
+        window = _hits[who]
     if len(window) >= limit:
         raise HTTPException(status_code=429, detail="Too many submissions from this address. Try again in an hour.")
     window.append(now)

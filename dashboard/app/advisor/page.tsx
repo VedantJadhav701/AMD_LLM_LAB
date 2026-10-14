@@ -72,7 +72,12 @@ export default function AdvisorPage() {
               <FieldNumber label="Custom VRAM" value={customVram} onChange={setCustomVram} min={1} suffix="GB" />
             )}
 
-            <FieldSelect label="Primary Goal" value={goal} onChange={(v) => setGoal(v as any)} options={GOALS} />
+            <FieldSelect
+              label="Primary Goal"
+              value={goal}
+              onChange={(value) => setGoal(value as "biggest_model" | "fastest" | "longest_context")}
+              options={GOALS}
+            />
 
             <div className="grid grid-cols-2 gap-3">
               <FieldNumber label="Context length" value={context} onChange={setContext} min={128} step={512} suffix="tok" />

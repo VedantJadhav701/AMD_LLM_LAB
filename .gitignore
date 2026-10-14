@@ -10,6 +10,8 @@ dashboard/.next/
 dashboard/.npm-cache/
 dashboard/out/
 dashboard/coverage/
+dashboard/dist-electron/
+dashboard/release/
 .npm-cache/
 tmp*.bat
 backend/data/hub.sqlite

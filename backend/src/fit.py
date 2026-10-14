@@ -25,7 +25,7 @@ router = APIRouter(tags=["fit"])
 # Effective bytes per weight. Quantized formats include group-scale overhead, so they
 # sit slightly above bits/8. These are approximations, surfaced in the response.
 BYTES_PER_WEIGHT = {"BF16": 2.0, "FP16": 2.0, "INT8": 1.05, "INT4": 0.55, "INT2": 0.30}
-DEFAULT_OVERHEAD_GB = 3.0  # ROCm/CUDA context + allocator slack; override per request
+DEFAULT_OVERHEAD_GB = 2.5  # ROCm/CUDA context + allocator slack; override per request
 HF_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}/[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
 MOE_KEYS = ("num_local_experts", "n_routed_experts", "num_experts", "moe_intermediate_size")
 
@@ -37,6 +37,7 @@ class ModelSpec(BaseModel):
     layers: int = Field(..., ge=1, le=512)
     kv_heads: int = Field(..., ge=1, le=512)
     head_dim: int = Field(..., ge=1, le=1024)
+    hidden_size: Optional[int] = Field(None, ge=1, le=131072)
     max_context_tokens: Optional[int] = Field(None, ge=1)
 
 
@@ -50,6 +51,9 @@ class FitRequest(BaseModel):
     kv_cache_bytes: Literal[1, 2, 4] = Field(2, description="Bytes per KV element (2 = fp16/bf16, 1 = fp8)")
     context_tokens: int = Field(..., gt=0, le=2_000_000)
     batch_size: int = Field(1, ge=1, le=1024)
+    prefill_chunk_tokens: int = Field(512, ge=1, le=2_000_000,
+                                      description="Maximum prompt tokens resident in a prefill chunk")
+    flash_attention: bool = Field(True, description="Whether a memory-efficient attention implementation is enabled")
     device_vram_gb: Optional[float] = Field(None, gt=0, le=4096)
     memory_bandwidth_gbps: Optional[float] = Field(None, gt=0, le=100_000)
     runtime_overhead_gb: float = Field(DEFAULT_OVERHEAD_GB, ge=0, le=64)
@@ -70,6 +74,7 @@ class FitResponse(BaseModel):
     precision: str
     weights_gb: float
     kv_cache_gb: float
+    activation_buffer_gb: float
     overhead_gb: float
     total_gb: float
     verdict: Optional[Literal["fits", "tight", "does_not_fit"]] = None
@@ -106,6 +111,7 @@ def spec_from_config(cfg: dict[str, Any]) -> ModelSpec:
             layers=int(cfg["num_hidden_layers"]),
             kv_heads=int(cfg.get("num_key_value_heads") or heads),
             head_dim=int(cfg.get("head_dim") or int(cfg["hidden_size"]) // heads),
+            hidden_size=int(cfg["hidden_size"]),
             max_context_tokens=cfg.get("max_position_embeddings"),
         )
     except KeyError as missing:
@@ -150,6 +156,14 @@ def estimate_fit(request: FitRequest, spec: ModelSpec, params_source: str, name:
     weights = params_b * BYTES_PER_WEIGHT[request.precision]
     kv_per_token = 2 * spec.layers * spec.kv_heads * spec.head_dim * request.kv_cache_bytes * request.batch_size / 1e9
     kv_cache = kv_per_token * request.context_tokens
+    # Prefill working memory is backend-dependent. This is a visible reservation, not a claim
+    # that every runtime has identical activation behavior.
+    hidden_size = spec.hidden_size or spec.kv_heads * spec.head_dim
+    chunk_tokens = min(request.context_tokens, request.prefill_chunk_tokens)
+    activation_factor = 1.25 if request.flash_attention else 3.0
+    activation_buffer = (
+        chunk_tokens * request.batch_size * hidden_size * spec.layers * request.kv_cache_bytes * activation_factor / 1e9
+    )
     overhead = request.runtime_overhead_gb
     if request.device_vram_gb and request.runtime_overhead_gb == DEFAULT_OVERHEAD_GB:
         if request.device_vram_gb <= 4.0:
@@ -158,7 +172,9 @@ def estimate_fit(request: FitRequest, spec: ModelSpec, params_source: str, name:
             overhead = 0.8
         elif request.device_vram_gb <= 16.0:
             overhead = 1.5
-    total = weights + kv_cache + overhead
+        elif request.device_vram_gb <= 24.0:
+            overhead = 1.8
+    total = weights + kv_cache + activation_buffer + overhead
 
     warnings: list[str] = []
     if spec.max_context_tokens and request.context_tokens > spec.max_context_tokens:
@@ -167,13 +183,13 @@ def estimate_fit(request: FitRequest, spec: ModelSpec, params_source: str, name:
         warnings.append("Quantized sizes assume steady-state serving. Loading can peak much higher if the "
                         "runtime quantizes from 16-bit weights on the GPU.")
     warnings.append("Assumes a dense decoder with full attention. Sliding-window layers and MoE models "
-                    "change the real number; activations at large batch sizes are not modelled.")
+                    "change the real number. The prefill activation buffer is a conservative runtime reservation.")
 
     verdict = headroom = max_context = None
     if request.device_vram_gb:
         headroom = request.device_vram_gb - total
         verdict = "does_not_fit" if headroom < 0 else "tight" if headroom < 0.1 * request.device_vram_gb else "fits"
-        free_for_kv = request.device_vram_gb - weights - overhead
+        free_for_kv = request.device_vram_gb - weights - activation_buffer - overhead
         max_context = int(free_for_kv / kv_per_token) if free_for_kv > 0 and kv_per_token > 0 else 0
         if spec.max_context_tokens:
             max_context = min(max_context, spec.max_context_tokens)
@@ -186,7 +202,7 @@ def estimate_fit(request: FitRequest, spec: ModelSpec, params_source: str, name:
 
     return FitResponse(
         model=name, params_b=round(params_b, 3), params_source=params_source, precision=request.precision,
-        weights_gb=round(weights, 2), kv_cache_gb=round(kv_cache, 2), overhead_gb=round(overhead, 2),
+        weights_gb=round(weights, 2), kv_cache_gb=round(kv_cache, 2), activation_buffer_gb=round(activation_buffer, 2), overhead_gb=round(overhead, 2),
         total_gb=round(total, 2), verdict=verdict,
         headroom_gb=None if headroom is None else round(headroom, 2), max_context_tokens=max_context,
         decode_tok_s_ceiling=None if ceiling is None else round(ceiling, 1), warnings=warnings,

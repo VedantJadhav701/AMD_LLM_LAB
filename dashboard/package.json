@@ -2,11 +2,16 @@
   "name": "amd-llm-lab-dashboard",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "node scripts/generate-public-data.mjs && next dev -H 127.0.0.1 -p 3000",
     "build": "node scripts/generate-public-data.mjs && next build",
-    "start": "next start -H 127.0.0.1 -p 3000",
-    "lint": "eslint ."
+    "start": "next start -H 0.0.0.0 -p 3000",
+    "lint": "eslint .",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "desktop:dev": "npm run build:electron && electron . --dev",
+    "package:win": "npm run build && npm run build:electron && electron-builder --win --config electron-builder.yml",
+    "package:mac": "npm run build && npm run build:electron && electron-builder --mac --config electron-builder.yml"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -20,6 +25,8 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.0.0",
     "postcss": "^8.0.0",

@@ -6,9 +6,9 @@ import { Panel, PageHeader, StatTile, FieldSelect, MessageState, formatModel } f
 import { hubApi, type HubStats, type LeaderboardRow } from "@/lib/hub-api";
 
 const COMMANDS = `pip install torch transformers   # use the ROCm build of PyTorch on AMD
-python bench/rocm_bench.py --model Qwen/Qwen2.5-1.5B-Instruct --contexts 512,2048
+python backend/rocm_bench.py --model Qwen/Qwen2.5-1.5B-Instruct --contexts 512,2048
 # review amd_llm_lab_results.json, then share it:
-python bench/rocm_bench.py --model Qwen/Qwen2.5-1.5B-Instruct --contexts 512,2048 --submit --api <hub-url>`;
+python backend/rocm_bench.py --model Qwen/Qwen2.5-1.5B-Instruct --contexts 512,2048 --submit --api <hub-url>`;
 
 export default function HubPage() {
   const [stats, setStats] = useState<HubStats | null>(null);
@@ -23,7 +23,6 @@ export default function HubPage() {
 
   useEffect(() => {
     let active = true;
-    setRows(null);
     hubApi
       .leaderboard({ model: model || undefined, context })
       .then((data) => active && (setRows(data), setError(null)))

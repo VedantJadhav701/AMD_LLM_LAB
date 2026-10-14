@@ -105,9 +105,9 @@ export default function LandingPage() {
             <a className="icon-btn" href={repo} target="_blank" rel="noreferrer" aria-label="GitHub repository">
               <Github size={18} />
             </a>
-            <a href={repo} target="_blank" rel="noreferrer" className="btn">
+            <Link href="/lab" className="btn">
               Enter the lab <ArrowUpRight size={16} />
-            </a>
+            </Link>
             <button
               type="button"
               className="icon-btn lp-menu"
@@ -134,9 +134,9 @@ export default function LandingPage() {
               Real MI300X measurements, prediction models and a hardware planner, together in one open research lab.
             </p>
             <div className="hero-actions">
-              <a href={repo} target="_blank" rel="noreferrer" className="btn btn--solid">
+              <Link href="/lab" className="btn btn--solid">
                 Enter the lab <ArrowUpRight size={17} />
-              </a>
+              </Link>
               <a href={repo} target="_blank" rel="noreferrer" className="btn">
                 <Github size={17} /> View on GitHub
               </a>

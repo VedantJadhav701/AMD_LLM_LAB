@@ -122,12 +122,16 @@ class Predictor:
         tp_mae = self.uncertainty_config["throughput"]["mae_tok_s"]
         guidance = self.uncertainty_config.get("application_guidance", {})
 
-        extrapolation_warning = None
+        warnings = []
         if input_data.parameters_b > 32.76 or input_data.parameters_b < 0.5:
-            extrapolation_warning = (
-                f"Model size {input_data.parameters_b}B is outside the benchmarked range (0.5B - 32.76B). "
-                "Predictions carry higher uncertainty."
+            warnings.append(
+                f"Model size {input_data.parameters_b}B is outside the benchmarked range (0.5B - 32.76B)."
             )
+        if input_data.context_tokens > 8192:
+            warnings.append(
+                f"Context length {input_data.context_tokens} is outside the benchmarked range (up to 8192 tokens)."
+            )
+        extrapolation_warning = " ".join(warnings) or None
 
         uncertainty_info = UncertaintyInfo(
             vram_mae_gb=round(vram_mae, 2),
