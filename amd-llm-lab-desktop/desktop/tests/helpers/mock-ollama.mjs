@@ -12,6 +12,16 @@ export function startMockOllama(port = 11434, { tokS = 40, gpuFraction = 1 } = {
     if (req.url === "/api/tags") return json({ models });
     if (req.url === "/api/ps") { const m = models[0]; return json({ models: [{ name: m.name, size: m.size, size_vram: m.size * gpuFraction }] }); }
     if (req.url === "/api/generate") return json({ done: true });
+    if (req.url === "/api/create") {
+      if (body.name) {
+        models.push({
+          name: body.name,
+          size: 2 * 1024 ** 3,
+          details: { parameter_size: "1.0B", quantization_level: "Q8_0", family: "mock" },
+        });
+      }
+      return json({ status: "success" });
+    }
     if (req.url === "/api/pull") {
       res.writeHead(200, { "content-type": "application/x-ndjson" });
       for (let i = 1; i <= 4; i++) res.write(JSON.stringify({ status: "pulling", completed: i * 25, total: 100 }) + "\n");

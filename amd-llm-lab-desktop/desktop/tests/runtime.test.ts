@@ -27,6 +27,12 @@ describe("ollama adapter against the mock", () => {
     expect(ms.map((m) => m.catalogId)).toEqual(["llama-3.1-8b", "qwen2.5-3b"]);
     expect(ms[0].paramsB).toBe(8);
   });
+  it("creates a model from a local GGUF path", async () => {
+    const r = rt();
+    await r.createFromGguf("imported-gemma", "C:/path/gemma.gguf");
+    const ms = await r.list();
+    expect(ms.some((m) => m.name === "imported-gemma")).toBe(true);
+  });
   it("reports offline cleanly", async () => { expect((await new OllamaRuntime("http://127.0.0.1:1").status()).online).toBe(false); });
   it("streams tokens and returns the runtime's own timings", async () => {
     let text = "";
