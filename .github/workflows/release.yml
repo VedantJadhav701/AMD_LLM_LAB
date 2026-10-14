@@ -53,6 +53,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
+          fail_on_unmatched_files: false
           files: |
             amd-llm-lab-desktop/desktop/release/*.exe
             amd-llm-lab-desktop/desktop/release/*.dmg

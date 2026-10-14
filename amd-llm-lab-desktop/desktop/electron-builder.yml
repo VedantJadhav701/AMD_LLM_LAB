@@ -20,7 +20,6 @@ mac:
   target: [{ target: dmg, arch: [arm64, x64] }, { target: zip, arch: [arm64, x64] }]
   category: public.app-category.developer-tools
   icon: build/icon.png
-  hardenedRuntime: true
+  identity: null
   gatekeeperAssess: false
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.plist
+
