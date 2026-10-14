@@ -1,0 +1,61 @@
+name: Release AMD LLM Lab
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            build_cmd: npm run dist:win
+          - os: macos-latest
+            build_cmd: npm run dist:mac
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: amd-llm-lab-desktop/desktop/package-lock.json
+
+      - name: Install dependencies
+        working-directory: amd-llm-lab-desktop/desktop
+        run: npm ci
+
+      - name: Run tests and typecheck
+        working-directory: amd-llm-lab-desktop/desktop
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Build application packages
+        working-directory: amd-llm-lab-desktop/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ${{ matrix.build_cmd }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          files: |
+            amd-llm-lab-desktop/desktop/release/*.exe
+            amd-llm-lab-desktop/desktop/release/*.dmg
+            amd-llm-lab-desktop/desktop/release/*.zip
+            amd-llm-lab-desktop/desktop/release/latest*.yml
+          generate_release_notes: true
