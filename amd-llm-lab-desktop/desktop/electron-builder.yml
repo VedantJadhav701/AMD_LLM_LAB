@@ -9,7 +9,7 @@ publish:
   repo: AMD_LLM_LAB
 win:
   target: [{ target: nsis, arch: [x64] }]
-  icon: build/icon.png
+  icon: build/icon.ico
   verifyUpdateCodeSignature: false
 nsis:
   oneClick: false

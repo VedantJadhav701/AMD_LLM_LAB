@@ -25,8 +25,10 @@ const theme = () => (nativeTheme.shouldUseDarkColors ? { bg: "#000000", fg: "#f5
 function createWindow() {
   const mac = process.platform === "darwin";
   const t = theme();
+  const iconPath = path.join(__dirname, "../icon.png");
   win = new BrowserWindow({
     width: 1280, height: 820, minWidth: 980, minHeight: 640, show: false, backgroundColor: t.bg, title: "AMD LLM Lab",
+    icon: iconPath,
     ...(mac ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : { titleBarStyle: "hidden" as const, titleBarOverlay: { color: t.bg, symbolColor: t.fg, height: 44 } }),
     webPreferences: { preload: path.join(__dirname, "../preload/index.js"), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false },
   });
