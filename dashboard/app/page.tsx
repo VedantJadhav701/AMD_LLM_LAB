@@ -105,8 +105,11 @@ export default function LandingPage() {
             <a className="icon-btn" href={repo} target="_blank" rel="noreferrer" aria-label="GitHub repository">
               <Github size={18} />
             </a>
+            <a href={`${repo}/releases/latest`} target="_blank" rel="noreferrer" className="btn btn--solid">
+              ⚡ Download App (v0.1.0) <ArrowUpRight size={16} />
+            </a>
             <a href={repo} target="_blank" rel="noreferrer" className="btn">
-              ⭐ Star on GitHub <ArrowUpRight size={16} />
+              ⭐ Star <ArrowUpRight size={16} />
             </a>
             <button
               type="button"
@@ -131,19 +134,19 @@ export default function LandingPage() {
               <em>before you run it.</em>
             </h1>
             <p className="hero-sub">
-              Real MI300X measurements, prediction models and a hardware planner, together in one open research lab.
+              Available as a cross-platform desktop app for Windows and macOS with an in-app Hugging Face model downloader, interactive Fit Studio, and local chat with Ollama & LM Studio.
             </p>
             <div className="hero-actions">
-              <a href={repo} target="_blank" rel="noreferrer" className="btn btn--solid">
-                ⭐ Star & Clone <ArrowUpRight size={17} />
+              <a href={`${repo}/releases/latest`} target="_blank" rel="noreferrer" className="btn btn--solid">
+                ⚡ Download Desktop App (v0.1.0) <ArrowUpRight size={17} />
               </a>
               <a href={repo} target="_blank" rel="noreferrer" className="btn">
-                <Github size={17} /> View on GitHub
+                <Github size={17} /> GitHub Repo
               </a>
             </div>
             <p className="hero-meta">
-              {ready ? `${records.length} measured configurations on MI300X. ` : "Measured on MI300X. "}
-              <a href="#setup">Clone & run it locally ↓</a>
+              Supports Windows 10/11 & macOS (Apple Silicon M1–M4 & Intel).
+              <a href={`${repo}/releases/latest`}>Get the latest installer (.exe / .dmg) →</a>
             </p>
           </div>
           <LandingScene />

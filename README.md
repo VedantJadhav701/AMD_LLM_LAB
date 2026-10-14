@@ -21,10 +21,29 @@
 </p>
 
 <p align="center">
-  <a href="https://amd-llm-lab.vercel.app/"><strong>🌐 Live Demo</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><strong>⚡ Download Desktop App (v0.1.0)</strong></a> &nbsp;|&nbsp;
+  <a href="https://amd-llm-lab.vercel.app/"><strong>🌐 Live Web Demo</strong></a> &nbsp;|&nbsp;
   <a href="https://vedantjadhav.hashnode.dev/amd-llm-lab"><strong>📝 Technical Breakdown</strong></a> &nbsp;|&nbsp;
   <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><strong>💻 GitHub Repository</strong></a>
 </p>
+
+---
+
+## 🚀 Desktop Application (Windows & macOS)
+
+<p align="center">
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><img src="https://img.shields.io/badge/Download-Windows%20Installer%20(.exe)-blue?logo=windows&style=for-the-badge" alt="Download Windows"></a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><img src="https://img.shields.io/badge/Download-macOS%20DMG%20(M1--M4%20%26%20Intel)-black?logo=apple&style=for-the-badge" alt="Download macOS"></a>
+</p>
+
+AMD LLM Lab includes a native cross-platform desktop application built with Electron 44, React 19, TypeScript, and Vite:
+
+- 📥 **In-App Hugging Face GGUF Downloader**: Download any quantized model directly with automatic Hugging Face discovery, disk space verification, real-time speed metrics, and atomic file saves.
+- 🎛️ **Fit Studio & Ladder Comparison**: Compare bit levels (FP16 down to 1-bit / `IQ1_S`), memory fit levels (*Fits, Fits Slowly, or Not on this laptop*), and tok/s speed predictions before downloading.
+- 💾 **Local Model Library**: Automatically inspects and lists all downloaded models from `AppData\Roaming\AMD LLM Lab\models` with one-click folder reveal.
+- 💬 **One-Click Engine Bridge & Chat**: Directly import any downloaded GGUF file into Ollama in seconds (`FROM "path/to/model.gguf"`) or connect to LM Studio, llama.cpp server, and AMD Lemonade.
+- 🔍 **Native Hardware Probing**: Accurately detects AMD Ryzen APUs, Radeon discrete GPUs, Ryzen AI NPUs, Apple Silicon M1–M4 Unified Memory, and NVIDIA hardware.
 
 ---
 

@@ -84,13 +84,36 @@ export class OllamaRuntime implements Runtime {
   }
 
   async createFromGguf(name: string, ggufPath: string): Promise<void> {
+    const fs = await import("node:fs/promises");
+    const os = await import("node:os");
+    const path = await import("node:path");
+    const { execFile } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const execFileAsync = promisify(execFile);
+
     const cleanPath = ggufPath.replace(/\\/g, "/");
-    const res = await fetch(`${this.baseUrl}/api/create`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, modelfile: `FROM "${cleanPath}"`, stream: false }),
-    });
-    if (!res.ok) throw new Error(await errText(res));
+    const tempModelfile = path.join(os.tmpdir(), `Modelfile-${Date.now()}`);
+    await fs.writeFile(tempModelfile, `FROM ${cleanPath}\n`, "utf8");
+
+    try {
+      await execFileAsync("ollama", ["create", name, "-f", tempModelfile]);
+    } catch {
+      // Fallback to HTTP endpoint with all variant fields
+      const res = await fetch(`${this.baseUrl}/api/create`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: name,
+          name,
+          from: cleanPath,
+          modelfile: `FROM ${cleanPath}`,
+          stream: false,
+        }),
+      });
+      if (!res.ok) throw new Error(await errText(res));
+    } finally {
+      await fs.unlink(tempModelfile).catch(() => undefined);
+    }
   }
 }
 
