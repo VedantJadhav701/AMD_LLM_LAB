@@ -105,9 +105,9 @@ export default function LandingPage() {
             <a className="icon-btn" href={repo} target="_blank" rel="noreferrer" aria-label="GitHub repository">
               <Github size={18} />
             </a>
-            <Link href="/lab" className="btn">
-              Enter the lab <ArrowUpRight size={16} />
-            </Link>
+            <a href={repo} target="_blank" rel="noreferrer" className="btn">
+              ⭐ Star on GitHub <ArrowUpRight size={16} />
+            </a>
             <button
               type="button"
               className="icon-btn lp-menu"
@@ -134,16 +134,16 @@ export default function LandingPage() {
               Real MI300X measurements, prediction models and a hardware planner, together in one open research lab.
             </p>
             <div className="hero-actions">
-              <Link href="/lab" className="btn btn--solid">
-                Enter the lab <ArrowUpRight size={17} />
-              </Link>
+              <a href={repo} target="_blank" rel="noreferrer" className="btn btn--solid">
+                ⭐ Star & Clone <ArrowUpRight size={17} />
+              </a>
               <a href={repo} target="_blank" rel="noreferrer" className="btn">
                 <Github size={17} /> View on GitHub
               </a>
             </div>
             <p className="hero-meta">
               {ready ? `${records.length} measured configurations on MI300X. ` : "Measured on MI300X. "}
-              <a href="#setup">Run it locally</a>
+              <a href="#setup">Clone & run it locally ↓</a>
             </p>
           </div>
           <LandingScene />
@@ -231,10 +231,10 @@ export default function LandingPage() {
               <p>Generation throughput, tokens per second</p>
             </article>
             <article className="measure-open">
-              <Link href="/benchmarks">
-                Open the benchmark explorer <ArrowUpRight size={22} />
-              </Link>
-              <p>Filter original runs by model, precision, context and backend.</p>
+              <a href="#setup">
+                Run the benchmark explorer <ArrowUpRight size={22} />
+              </a>
+              <p>Clone locally to filter original runs by model, precision, context and backend.</p>
             </article>
           </div>
         </section>
@@ -246,17 +246,17 @@ export default function LandingPage() {
             <article className="tile">
               <h3>Model scaling</h3>
               <p>Compare measured memory and generation speed as parameter count grows.</p>
-              <Link href="/analytics">Explore scaling <ArrowRight size={16} /></Link>
+              <a href="#setup">Setup & explore scaling <ArrowRight size={16} /></a>
             </article>
             <article className="tile">
               <h3>Precision</h3>
               <p>See how quantization and number formats change results across models and backends.</p>
-              <Link href="/quantization">Explore precision <ArrowRight size={16} /></Link>
+              <a href="#setup">Setup & explore precision <ArrowRight size={16} /></a>
             </article>
             <article className="tile">
               <h3>Configuration</h3>
               <p>Find where context length and backend choice shift the measured performance envelope.</p>
-              <Link href="/benchmarks">Explore benchmarks <ArrowRight size={16} /></Link>
+              <a href="#setup">Setup & explore benchmarks <ArrowRight size={16} /></a>
             </article>
           </div>
         </section>
@@ -270,9 +270,9 @@ export default function LandingPage() {
                 Start the local API and the lab reads your CPU, RAM and GPU, then compares them against MI300X-calibrated
                 estimates. The hosted site can’t inspect your device, and estimates are not local runtime benchmarks.
               </p>
-              <Link className="link-arrow" href="/device">
-                Analyze my device <ArrowRight size={16} />
-              </Link>
+              <a className="link-arrow" href="#setup">
+                Run local device probe <ArrowRight size={16} />
+              </a>
             </div>
             <div className="device">
               <div className="device-top">
@@ -324,17 +324,17 @@ export default function LandingPage() {
 
         {/* Open source */}
         <section id="project" className="oss">
-          <h2 >Research you can inspect.</h2>
+          <h2>Research you can inspect.</h2>
           <p>
             The benchmark dataset, trained predictors, FastAPI service, benchmark tooling and this dashboard are all in
             the public repository.
           </p>
           <div className="oss-actions">
             <a href={repo} target="_blank" rel="noreferrer" className="btn btn--solid">
-              <Github size={17} /> Open the repository
+              ⭐ Star on GitHub <Github size={17} />
             </a>
-            <a href={repo} target="_blank" rel="noreferrer" className="btn">
-              Enter the lab <ArrowUpRight size={16} />
+            <a href="#setup" className="btn">
+              Setup instructions <ArrowRight size={16} />
             </a>
           </div>
           <ul className="stack" aria-label="What the repository contains">
@@ -356,7 +356,7 @@ export default function LandingPage() {
               </p>
               <div className="setup-cta">
                 <a href={repo} target="_blank" rel="noreferrer" className="btn btn--solid">
-                  Enter the lab <ArrowUpRight size={16} />
+                  ⭐ Star the Repo <ArrowUpRight size={16} />
                 </a>
                 <a href={repo} target="_blank" rel="noreferrer" className="btn btn--ghost">
                   <Github size={17} /> GitHub
@@ -389,10 +389,10 @@ export default function LandingPage() {
             <span className="brand-name">LLM Lab</span>
           </Link>
           <nav aria-label="Footer">
-            <a href={repo} target="_blank" rel="noreferrer">Lab workspace</a>
-            <Link href="/benchmarks">Benchmarks</Link>
-            <Link href="/device">Hardware probe</Link>
-            <a href={repo} target="_blank" rel="noreferrer">GitHub</a>
+            <a href="#setup">Setup Guide</a>
+            <a href="#measurements">Benchmarks</a>
+            <a href="#hardware">Hardware probe</a>
+            <a href={repo} target="_blank" rel="noreferrer">⭐ GitHub (Star & Clone)</a>
           </nav>
         </div>
         <small>
