@@ -1,0 +1,17 @@
+name: desktop
+on: { push: { tags: ["v*"] }, workflow_dispatch: {} }
+jobs:
+  build:
+    strategy: { matrix: { os: [windows-latest, macos-latest] } }
+    runs-on: ${{ matrix.os }}
+    defaults: { run: { working-directory: desktop } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npx electron-builder --publish never
+      - uses: actions/upload-artifact@v4
+        with: { name: installers-${{ matrix.os }}, path: "desktop/release/*.{exe,dmg,zip}" }

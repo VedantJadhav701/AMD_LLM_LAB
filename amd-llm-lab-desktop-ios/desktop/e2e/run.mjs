@@ -1,0 +1,34 @@
+// Launches the built app in real Electron against a mock Ollama and walks the main screens.
+import { _electron as electron } from "playwright-core";
+import os from "node:os"; import fs from "node:fs"; import path from "node:path";
+import { startMockOllama } from "../tests/helpers/mock-ollama.mjs";
+const server = await startMockOllama(11434, { tokS: 120 });
+const data = fs.mkdtempSync(path.join(os.tmpdir(), "lab-e2e-"));
+const app = await electron.launch({ args: [".", "--no-sandbox", "--disable-gpu"], env: { ...process.env, LAB_USER_DATA: data } });
+const w = await app.firstWindow();
+const errors = []; w.on("pageerror", (e) => errors.push(e.message)); w.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+const shot = (n) => w.screenshot({ path: `e2e/shots/${n}.png` });
+const ok = (c, msg) => { if (!c) { console.error("FAIL", msg); process.exitCode = 1; } else console.log("ok  ", msg); };
+await w.setViewportSize({ width: 1280, height: 820 });
+await w.getByText("What can this laptop really run?").waitFor();
+await w.locator(".card h2").first().waitFor({ timeout: 30000 });
+ok((await w.locator(".card h2").count()) > 0, "overview lists recommended models"); await shot("1-overview");
+await w.getByRole("button", { name: "Can I run it?" }).click();
+await w.getByText("Quality level").waitFor(); ok(true, "can-run page evaluates a model"); await shot("2-canrun");
+// Pretend this is a 4 GB GPU laptop so the Fit Studio ladder shows something interesting.
+await w.evaluate(() => window.lab.invoke("settings:set", { overrides: { vramGiB: 4, bandwidthGBps: 128, ramAvailableGiB: 9 } }));
+await w.getByRole("button", { name: "Fit Studio" }).click();
+await w.getByText("Level", { exact: true }).waitFor(); await w.locator(".callout").waitFor(); ok((await w.locator("table.ladder tbody tr").count()) === 15, "fit studio lists 15 quantization levels"); await shot("2b-fit");
+await w.emulateMedia({ colorScheme: "dark" }); await shot("2c-fit-dark"); await w.emulateMedia({ colorScheme: "light" });
+await w.getByRole("button", { name: "Lab", exact: true }).click();
+await w.locator("select").first().waitFor();
+await w.waitForFunction(() => document.querySelectorAll("select")[1]?.options.length > 0);
+await w.getByRole("button", { name: "Run benchmark" }).click();
+await w.getByText("Generation").waitFor({ timeout: 60000 }); ok(true, "benchmark completes"); await shot("3-bench");
+await w.getByPlaceholder("Message").fill("hello"); await w.getByRole("button", { name: "Send" }).click();
+await w.getByText(/tok\/s · \d+ tokens/).waitFor({ timeout: 20000 }); ok(true, "chat streams with stats"); await shot("4-chat");
+await w.getByRole("button", { name: "History" }).click(); await w.getByText("llama3.1:8b").first().waitFor(); ok(true, "history saved"); await shot("5-history");
+await w.getByRole("button", { name: "My machine" }).click(); await w.getByText("Your benchmarks").waitFor(); await shot("6-machine");
+await w.getByRole("button", { name: "Settings" }).click(); await shot("7-settings");
+ok(errors.length === 0, `no renderer errors ${errors.join("|")}`);
+await app.close(); server.close();
