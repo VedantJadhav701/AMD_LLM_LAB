@@ -79,3 +79,82 @@ export function CtxSelect({ value, onChange }: { value: number; onChange: (n: nu
     </label>
   );
 }
+
+/** Parses markdown inline syntax: bold (**text**), inline code (`code`), and italic (*text*) */
+function parseInline(text: string): ReactNode[] {
+  // Regex splitting by bold (**...**), inline code (`...`), or italic (*...*)
+  const parts = text.split(/(\*\*[^*]+?\*\*|`[^`]+?`|\*[^*]+?\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return <strong key={idx} style={{ fontWeight: 700, color: "var(--text)" }}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return <code key={idx} className="inline-code">{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
+      return <em key={idx}>{part.slice(1, -1)}</em>;
+    }
+    return part;
+  });
+}
+
+/** Formats LLM streaming response into structured paragraphs, bold points, bullet lists, and code blocks */
+export function FormattedMessage({ text }: { text: string }) {
+  if (!text) return <span>…</span>;
+
+  // Split by code blocks first
+  const blocks = text.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div className="formatted-msg">
+      {blocks.map((block, bIdx) => {
+        if (block.startsWith("```") && block.endsWith("```")) {
+          const lines = block.slice(3, -3).split("\n");
+          const lang = lines[0]?.trim();
+          const code = (lang ? lines.slice(1) : lines).join("\n").trim();
+          return (
+            <pre key={bIdx} className="msg-code-block">
+              {lang ? <div className="code-lang">{lang}</div> : null}
+              <code>{code}</code>
+            </pre>
+          );
+        }
+
+        // Regular markdown text paragraphs / bullet lists
+        const paragraphs = block.split(/\n\s*\n/);
+        return paragraphs.map((para, pIdx) => {
+          const lines = para.split("\n").filter((l) => l.trim().length > 0);
+          const isList = lines.length > 0 && lines.every((l) => /^\s*([-*•]|\d+\.)\s+/.test(l));
+
+          if (isList) {
+            return (
+              <ul key={`${bIdx}-${pIdx}`} className="msg-list">
+                {lines.map((item, lIdx) => {
+                  const cleaned = item.replace(/^\s*([-*•]|\d+\.)\s+/, "");
+                  return <li key={lIdx}>{parseInline(cleaned)}</li>;
+                })}
+              </ul>
+            );
+          }
+
+          // Single line headers: #, ##, ###
+          if (lines.length === 1 && /^#{1,4}\s+/.test(lines[0])) {
+            const heading = lines[0].replace(/^#{1,4}\s+/, "");
+            return <div key={`${bIdx}-${pIdx}`} className="msg-heading">{parseInline(heading)}</div>;
+          }
+
+          return (
+            <p key={`${bIdx}-${pIdx}`} className="msg-para">
+              {lines.map((line, lIdx) => (
+                <span key={lIdx}>
+                  {parseInline(line)}
+                  {lIdx < lines.length - 1 ? <br /> : null}
+                </span>
+              ))}
+            </p>
+          );
+        });
+      })}
+    </div>
+  );
+}

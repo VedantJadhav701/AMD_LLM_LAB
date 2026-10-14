@@ -101,5 +101,12 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--fill); } tr.
 @keyframes fade { from { opacity: 0; } } @keyframes up { from { transform: translateY(40px); opacity: 0; } }
 .ladder td:first-child { font-weight: 600; }
 details summary { cursor: pointer; }
-pre { margin: 0; }
+.formatted-msg { display: flex; flex-direction: column; gap: 8px; }
+.msg-para { margin: 0; line-height: 1.5; }
+.msg-list { margin: 4px 0 6px 18px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.msg-list li { line-height: 1.45; }
+.msg-heading { font-weight: 700; font-size: 15px; margin-top: 6px; color: var(--text); }
+.inline-code { font-family: var(--mono); font-size: 12.5px; background: rgba(125,125,125,.18); padding: 1.5px 5px; border-radius: 5px; }
+.msg-code-block { margin: 6px 0; background: rgba(0,0,0,.35); padding: 10px 14px; border-radius: 8px; font-family: var(--mono); font-size: 12.5px; overflow-x: auto; position: relative; }
+.msg-code-block .code-lang { font-size: 10px; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; letter-spacing: .06em; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

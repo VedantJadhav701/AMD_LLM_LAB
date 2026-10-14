@@ -1,7 +1,7 @@
 import { Download, Send, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { BenchResult, ChatMessage, GenStats, InstalledModel } from "../../shared/types";
-import { Empty } from "../components/ui";
+import { Empty, FormattedMessage } from "../components/ui";
 import { api, useApp } from "../state";
 
 type Msg = ChatMessage & { stats?: GenStats };
@@ -75,7 +75,18 @@ export function Lab() {
     <div className="chat">
       <div className="msgs" aria-live="polite">
         {!msgs.length ? <div className="dim" style={{ margin: "auto" }}>Say something to {sel?.name ?? "the model"}. Speed is shown under each reply.</div> : null}
-        {msgs.map((m, i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}><div className={`msg ${m.role}`}>{m.content || "…"}</div>{m.stats?.decodeTokS ? <div className="dim mono" style={{ fontSize: 12, marginTop: 4 }}>{fmt(m.stats.decodeTokS)} tok/s · {m.stats.tokens} tokens{m.stats.ttftS ? ` · first token ${fmt(m.stats.ttftS, 2)}s` : ""}</div> : null}</div>)}
+        {msgs.map((m, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
+            <div className={`msg ${m.role}`}>
+              {m.role === "assistant" ? <FormattedMessage text={m.content} /> : (m.content || "…")}
+            </div>
+            {m.stats?.decodeTokS ? (
+              <div className="dim mono" style={{ fontSize: 12, marginTop: 4 }}>
+                {fmt(m.stats.decodeTokS)} tok/s · {m.stats.tokens} tokens{m.stats.ttftS ? ` · first token ${fmt(m.stats.ttftS, 2)}s` : ""}
+              </div>
+            ) : null}
+          </div>
+        ))}
         <div ref={end} />
       </div>
       <div className="row" style={{ marginTop: 12, flexWrap: "nowrap" }}>
