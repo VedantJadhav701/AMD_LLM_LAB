@@ -166,6 +166,41 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
   });
   handle("download:cancel", (id) => { downloads.get(String(id))?.abort(); });
 
+  handle("file:showInFolder", async (filePath) => {
+    if (typeof filePath === "string" && filePath.trim()) {
+      shell.showItemInFolder(filePath.trim());
+      return true;
+    }
+    return false;
+  });
+
+  handle("models:downloaded", async () => {
+    const fs = await import("node:fs/promises");
+    const modelsDir = path.join(dataDir, "models");
+    try {
+      const files = await fs.readdir(modelsDir);
+      const ggufs = files.filter((f) => f.toLowerCase().endsWith(".gguf"));
+      const out = await Promise.all(
+        ggufs.map(async (name) => {
+          const filePath = path.join(modelsDir, name);
+          const stat = await fs.stat(filePath);
+          return { name, filePath, sizeGiB: Math.round((stat.size / (1024 * 1024 * 1024)) * 10) / 10 };
+        })
+      );
+      return out;
+    } catch {
+      return [];
+    }
+  });
+
+  handle("ollama:importGguf", async (a) => {
+    const { name, ggufPath } = a as { name: string; ggufPath: string };
+    const rts = registry.all();
+    const rt = rts.find((r) => r.kind === "ollama") as { createFromGguf?: (name: string, path: string) => Promise<void> } | undefined;
+    if (!rt?.createFromGguf) throw new Error("Ollama is not running. Please start Ollama first.");
+    await rt.createFromGguf(name, ggufPath);
+  });
+
   handle("history:list", async () => (await store.read()).history);
   handle("history:delete", async (id) => (await store.update((d) => ({ ...d, history: d.history.filter((h) => h.id !== id) }))).history);
   handle("history:clear", async () => { await store.update((d) => ({ ...d, history: [] })); });

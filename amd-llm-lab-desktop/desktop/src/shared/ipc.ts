@@ -25,6 +25,9 @@ export interface InvokeMap {
   "pull:cancel": [string, void];
   "download:start": [{ hfRepo: string; quant: string; fileName?: string }, string];
   "download:cancel": [string, void];
+  "file:showInFolder": [string, boolean];
+  "models:downloaded": [void, Array<{ name: string; filePath: string; sizeGiB: number }>];
+  "ollama:importGguf": [{ name: string; ggufPath: string }, void];
   "history:list": [void, BenchResult[]];
   "history:delete": [string, BenchResult[]];
   "history:clear": [void, void];
@@ -54,6 +57,7 @@ export interface LabApi {
 export const INVOKE_CHANNELS: Array<keyof InvokeMap> = [
   "app:info", "app:openExternal", "machine:get", "machine:refresh", "settings:get", "settings:set", "catalog:list", "hf:lookup", "decide:recommend", "decide:evaluate",
   "runtime:refresh", "runtime:models", "chat:start", "chat:stop", "bench:start", "bench:cancel", "pull:start", "pull:cancel", "download:start", "download:cancel",
+  "file:showInFolder", "models:downloaded", "ollama:importGguf",
   "history:list", "history:delete", "history:clear", "calibration:get", "calibration:clear", "hub:preview", "hub:submit",
 ];
 export const EVENT_CHANNELS: Array<keyof EventMap> = ["chat:token", "chat:done", "chat:error", "bench:progress", "bench:done", "pull:progress", "pull:done", "download:progress", "download:done"];

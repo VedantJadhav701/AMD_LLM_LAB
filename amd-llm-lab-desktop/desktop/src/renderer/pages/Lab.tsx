@@ -15,13 +15,34 @@ export function Lab() {
   const [msgs, setMsgs] = useState<Msg[]>([]); const [input, setInput] = useState(""); const [busy, setBusy] = useState<string | null>(null);
   const [bench, setBench] = useState<{ step: string; frac: number } | null>(null); const [last, setLast] = useState<BenchResult | null>(null); const [benchErr, setBenchErr] = useState<string | null>(null);
   const [pullName, setPullName] = useState(""); const [pull, setPull] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false); const [importMsg, setImportMsg] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null); const ctx = settings?.defaultCtx ?? 4096;
-  const want = (navArg as { catalogId?: string } | null)?.catalogId;
+  const nav = navArg as { catalogId?: string; downloadedFile?: string; modelName?: string } | null;
+  const want = nav?.catalogId;
+  const downloadedFile = nav?.downloadedFile;
+  const downloadedModelName = nav?.modelName;
 
   useEffect(() => { if (!rtId && online[0]) setRtId(online[0].id); }, [online, rtId]);
-  const loadModels = async (id = rtId) => { if (!id) return; try { const m = await api.invoke("runtime:models", id); setModels(m); setLoadErr(null); setModel((cur) => cur && m.some((x) => x.name === cur) ? cur : m.find((x) => want && x.catalogId === want)?.name ?? m[0]?.name ?? ""); } catch (e) { setLoadErr((e as Error).message); } };
+  const loadModels = async (id = rtId) => { if (!id) return; try { const m = await api.invoke("runtime:models", id); setModels(m); setLoadErr(null); setModel((cur) => cur && m.some((x) => x.name === cur) ? cur : m.find((x) => (downloadedModelName && x.name === downloadedModelName) || (want && x.catalogId === want))?.name ?? m[0]?.name ?? ""); } catch (e) { setLoadErr((e as Error).message); } };
   useEffect(() => { void loadModels(); /* eslint-disable-next-line */ }, [rtId]);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [msgs]);
+
+  const handleImportToOllama = async () => {
+    if (!downloadedFile || !downloadedModelName) return;
+    setImporting(true); setImportMsg("Registering GGUF weights into Ollama...");
+    try {
+      await api.invoke("ollama:importGguf", { name: downloadedModelName, ggufPath: downloadedFile });
+      setImportMsg("✓ Model ready in Ollama! Selected below.");
+      await refreshRuntimes();
+      await loadModels();
+      setModel(downloadedModelName);
+    } catch (e) {
+      setImportMsg(`⚠ ${(e as Error).message}`);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   useEffect(() => {
     const off = [
       api.on("chat:token", (p) => setMsgs((m) => { const c = [...m]; const l = c[c.length - 1]; if (l?.role === "assistant") c[c.length - 1] = { ...l, content: l.content + p.text }; return c; })),
@@ -52,6 +73,16 @@ export function Lab() {
 
   if (!online.length) return (<>
     <div className="eyebrow">Lab</div><h1>Test a model on this laptop</h1>
+    {downloadedFile ? (
+      <div className="card banner" style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--card))", border: "1px solid var(--accent)", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontWeight: 600 }}>Downloaded Model: {downloadedModelName || "GGUF Model"}</div>
+          <div className="mono dim" style={{ fontSize: 12 }}>{downloadedFile}</div>
+          <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>Model file is on your disk. Start Ollama or LM Studio to load it into memory.</div>
+        </div>
+        <button className="btn" onClick={() => api.invoke("file:showInFolder", downloadedFile)}>Show in Folder</button>
+      </div>
+    ) : null}
     <Empty title="No local model server found" action={<div className="row" style={{ justifyContent: "center" }}><button className="btn primary" onClick={() => api.invoke("app:openExternal", "https://ollama.com/download")}><Download size={16} />Get Ollama</button><button className="btn" onClick={refreshRuntimes}>Check again</button></div>}>
       Install Ollama (free), start it, and your models appear here. LM Studio, llama.cpp server and AMD Lemonade are detected automatically too.
       {ollama?.error ? <div className="dim" style={{ marginTop: 8, fontSize: 12 }}>{ollama.error}</div> : null}
@@ -59,6 +90,25 @@ export function Lab() {
 
   return (<>
     <div className="eyebrow">Lab</div><h1>Test a model on this laptop</h1>
+    {downloadedFile ? (
+      <div className="card banner" style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--card))", border: "1px solid var(--accent)", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontWeight: 600 }}>Downloaded: {downloadedModelName || "GGUF File"}</div>
+          <div className="mono dim" style={{ fontSize: 12 }}>{downloadedFile}</div>
+          {importMsg ? <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>{importMsg}</div> : null}
+        </div>
+        <div className="row" style={{ gap: 8 }}>
+          {online.some((r) => r.kind === "ollama") ? (
+            <button className="btn primary" disabled={importing} onClick={handleImportToOllama}>
+              {importing ? "Importing..." : "One-Click Load into Ollama"}
+            </button>
+          ) : null}
+          <button className="btn" onClick={() => api.invoke("file:showInFolder", downloadedFile)}>
+            Show in Folder
+          </button>
+        </div>
+      </div>
+    ) : null}
     <div className="card" style={{ marginBottom: 16 }}><div className="grid g3" style={{ alignItems: "end" }}>
       <label className="f">Server<select value={rtId} onChange={(e) => setRtId(e.target.value)}>{online.map((r) => <option key={r.id} value={r.id}>{r.name} {r.version ? `v${r.version}` : ""}</option>)}</select></label>
       <label className="f">Model<select value={model} onChange={(e) => setModel(e.target.value)}>{models.length ? models.map((m) => <option key={m.name} value={m.name}>{m.name}{m.sizeGiB ? ` · ${m.sizeGiB.toFixed(1)} GB` : ""}</option>) : <option value="">No models installed</option>}</select></label>

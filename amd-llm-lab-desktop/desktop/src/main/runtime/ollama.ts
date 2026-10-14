@@ -82,6 +82,16 @@ export class OllamaRuntime implements Runtime {
   async unload(model: string): Promise<void> {
     await fetch(`${this.baseUrl}/api/generate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model, keep_alive: 0 }) }).catch(() => undefined);
   }
+
+  async createFromGguf(name: string, ggufPath: string): Promise<void> {
+    const cleanPath = ggufPath.replace(/\\/g, "/");
+    const res = await fetch(`${this.baseUrl}/api/create`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, modelfile: `FROM "${cleanPath}"`, stream: false }),
+    });
+    if (!res.ok) throw new Error(await errText(res));
+  }
 }
 
 async function errText(res: Response): Promise<string> {

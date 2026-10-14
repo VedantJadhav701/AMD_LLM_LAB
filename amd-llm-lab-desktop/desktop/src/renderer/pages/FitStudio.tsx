@@ -170,7 +170,17 @@ export function FitStudio() {
                   {dlCompletedPath}
                 </div>
                 <div className="row" style={{ marginTop: 10 }}>
-                  <button className="btn primary" onClick={() => go("lab")}>Open in Lab / Chat</button>
+                  <button
+                    className="btn primary"
+                    onClick={() =>
+                      go("lab", {
+                        downloadedFile: dlCompletedPath,
+                        modelName: `${(spec.name || "model").toLowerCase().replace(/[^a-z0-9]/g, "-")}:${cur.quant.toLowerCase()}`,
+                      })
+                    }
+                  >
+                    Open in Lab / Chat
+                  </button>
                   <button className="btn" onClick={() => setDlCompletedPath(null)}>Done</button>
                 </div>
               </div>
