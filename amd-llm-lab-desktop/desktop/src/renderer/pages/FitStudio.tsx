@@ -13,7 +13,7 @@ const TIER: Record<string, { label: string; cls: string }> = {
 const ROUTES: Record<Route, string> = { "download-quant": "Download a ready-made file", "quantize-from-gguf": "Download a 16-bit file, then shrink it here", "convert-from-hf": "Download the original weights, convert, then shrink" };
 
 export function FitStudio() {
-  const { navArg, settings, rev } = useApp();
+  const { navArg, settings, rev, go } = useApp();
   const [catalog, setCatalog] = useState<ModelSpec[]>([]);
   const [modelId, setModelId] = useState<string>((navArg as { modelId?: string } | null)?.modelId ?? "qwen2.5-14b");
   const [ctx, setCtx] = useState<number | null>(null);
@@ -23,6 +23,11 @@ export function FitStudio() {
   const [err, setErr] = useState<string | null>(null);
   const [mbps, setMbps] = useState(100);
   const [hf, setHf] = useState(""); const [busy, setBusy] = useState(false);
+  const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [dlProgress, setDlProgress] = useState<{ status: string; percent: number; downloadedMB: number; totalMB: number; speedMBps: number } | null>(null);
+  const [dlCompletedPath, setDlCompletedPath] = useState<string | null>(null);
+  const [dlError, setDlError] = useState<string | null>(null);
   const c = ctx ?? settings?.defaultCtx ?? 4096;
 
   useEffect(() => { void api.invoke("catalog:list").then(setCatalog); }, []);
@@ -31,6 +36,55 @@ export function FitStudio() {
     api.invoke("decide:evaluate", { modelId, ctx: c, extended: true }).then((r) => { if (!live) return; setSpec(r.spec); setVs(r.verdicts); const b = bestFit(r.verdicts); setSel((b.best ?? b.closeApps ?? b.smallest)?.quant ?? null); }).catch((e) => live && setErr(e.message));
     return () => { live = false; };
   }, [modelId, c, rev]);
+
+  useEffect(() => {
+    const offProg = api.on("download:progress", (p) => {
+      if (downloadId && p.id === downloadId) {
+        setDlProgress(p);
+      }
+    });
+    const offDone = api.on("download:done", (d) => {
+      if (downloadId && d.id === downloadId) {
+        setDownloading(false);
+        if (d.error) {
+          setDlError(d.error);
+        } else if (d.filePath) {
+          setDlCompletedPath(d.filePath);
+        }
+      }
+    });
+    return () => {
+      offProg();
+      offDone();
+    };
+  }, [downloadId]);
+
+  const handleDownload = async () => {
+    if (!spec || !cur) return;
+    setDownloading(true);
+    setDlError(null);
+    setDlCompletedPath(null);
+    setDlProgress({ status: "Connecting to Hugging Face...", percent: 0, downloadedMB: 0, totalMB: 0, speedMBps: 0 });
+    try {
+      const id = await api.invoke("download:start", {
+        hfRepo: spec.hf ?? spec.id,
+        quant: cur.quant,
+      });
+      setDownloadId(id);
+    } catch (e) {
+      setDownloading(false);
+      setDlError((e as Error).message);
+    }
+  };
+
+  const handleCancelDownload = () => {
+    if (downloadId) {
+      void api.invoke("download:cancel", downloadId);
+    }
+    setDownloading(false);
+    setDlProgress(null);
+  };
+
   async function lookup() { setBusy(true); setErr(null); try { const r = await api.invoke("hf:lookup", hf); setCatalog((x) => (x.some((m) => m.id === r.spec.id) ? x : [r.spec, ...x])); setModelId(r.spec.id); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); } }
 
   const fit = useMemo(() => (vs ? bestFit(vs) : null), [vs]);
@@ -90,10 +144,56 @@ export function FitStudio() {
               <label className="f" style={{ marginTop: 4 }}>Your download speed<select value={mbps} onChange={(e) => setMbps(Number(e.target.value))}>{[25, 50, 100, 300, 1000].map((x) => <option key={x} value={x}>{x} Mbps</option>)}</select></label>
               <div className="dim" style={{ fontSize: 12 }}>Time estimates are rough planning numbers. Ready-made files are usually available for popular models.</div>
             </div>
-            <div className="row" style={{ marginTop: 16 }}>
-              <button className="btn primary" onClick={() => api.invoke("app:openExternal", search)}>Find this download</button>
-              <span className="dim" style={{ fontSize: 12 }}>Opens Hugging Face. One-click download and conversion inside the app is the next milestone.</span>
-            </div>
+            <h3 style={{ marginTop: 20 }}>Download & Prepare</h3>
+            {downloading ? (
+              <div className="card" style={{ background: "var(--fill)", border: "1px solid var(--sep)", padding: 14 }}>
+                <div className="row between" style={{ fontWeight: 600, fontSize: 13 }}>
+                  <span>{dlProgress?.status || "Downloading..."}</span>
+                  <span className="mono">{dlProgress ? `${dlProgress.percent}%` : "0%"}</span>
+                </div>
+                <div className="bar" style={{ height: 8, margin: "10px 0" }}>
+                  <i style={{ width: `${dlProgress?.percent ?? 0}%` }} />
+                </div>
+                <div className="row between dim mono" style={{ fontSize: 12 }}>
+                  <span>{dlProgress?.downloadedMB ?? 0} MB / {dlProgress?.totalMB ?? 0} MB</span>
+                  <span>{dlProgress?.speedMBps ? `${dlProgress.speedMBps} MB/s` : ""}</span>
+                </div>
+                <div className="row" style={{ marginTop: 12 }}>
+                  <button className="btn" onClick={handleCancelDownload}>Cancel Download</button>
+                </div>
+              </div>
+            ) : dlCompletedPath ? (
+              <div className="callout" style={{ background: "color-mix(in srgb, #34c759 14%, var(--card))", border: "1px solid rgba(52, 199, 89, 0.3)" }}>
+                <h3 style={{ color: "#34c759", marginTop: 0 }}>✓ Download Complete</h3>
+                <p style={{ fontSize: 13, margin: "4px 0" }}>GGUF model saved to disk and ready to run with llama.cpp or LM Studio:</p>
+                <div className="mono dim" style={{ fontSize: 12, wordBreak: "break-all", background: "rgba(0,0,0,0.2)", padding: "6px 8px", borderRadius: 6, margin: "8px 0" }}>
+                  {dlCompletedPath}
+                </div>
+                <div className="row" style={{ marginTop: 10 }}>
+                  <button className="btn primary" onClick={() => go("lab")}>Open in Lab / Chat</button>
+                  <button className="btn" onClick={() => setDlCompletedPath(null)}>Done</button>
+                </div>
+              </div>
+            ) : (
+              <div className="stack" style={{ gap: 10 }}>
+                {dlError ? (
+                  <div className="flag bad">
+                    <div>{dlError}</div>
+                  </div>
+                ) : null}
+                <div className="row" style={{ gap: 10 }}>
+                  <button className="btn primary" onClick={handleDownload} disabled={downloading}>
+                    Download this quant ({cur.quant})
+                  </button>
+                  <button className="btn" onClick={() => api.invoke("app:openExternal", search)}>
+                    View on Hugging Face
+                  </button>
+                </div>
+                <div className="dim" style={{ fontSize: 12 }}>
+                  Streams {fmtGiB(cur.fileGiB)} GGUF file directly to local storage with verified integrity.
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
       </div>

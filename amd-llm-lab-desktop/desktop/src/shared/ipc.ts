@@ -23,6 +23,8 @@ export interface InvokeMap {
   "bench:cancel": [void, void];
   "pull:start": [{ runtimeId: string; model: string }, string];
   "pull:cancel": [string, void];
+  "download:start": [{ hfRepo: string; quant: string; fileName?: string }, string];
+  "download:cancel": [string, void];
   "history:list": [void, BenchResult[]];
   "history:delete": [string, BenchResult[]];
   "history:clear": [void, void];
@@ -41,6 +43,8 @@ export interface EventMap {
   "bench:done": { id: string; result?: BenchResult; calibration?: Calibration; error?: string; cancelled?: boolean };
   "pull:progress": { id: string; status: string; completed?: number; total?: number };
   "pull:done": { id: string; error?: string };
+  "download:progress": { id: string; status: string; percent: number; downloadedMB: number; totalMB: number; speedMBps: number };
+  "download:done": { id: string; filePath?: string; error?: string };
 }
 
 export interface LabApi {
@@ -49,8 +53,8 @@ export interface LabApi {
 }
 export const INVOKE_CHANNELS: Array<keyof InvokeMap> = [
   "app:info", "app:openExternal", "machine:get", "machine:refresh", "settings:get", "settings:set", "catalog:list", "hf:lookup", "decide:recommend", "decide:evaluate",
-  "runtime:refresh", "runtime:models", "chat:start", "chat:stop", "bench:start", "bench:cancel", "pull:start", "pull:cancel", "history:list", "history:delete", "history:clear",
-  "calibration:get", "calibration:clear", "hub:preview", "hub:submit",
+  "runtime:refresh", "runtime:models", "chat:start", "chat:stop", "bench:start", "bench:cancel", "pull:start", "pull:cancel", "download:start", "download:cancel",
+  "history:list", "history:delete", "history:clear", "calibration:get", "calibration:clear", "hub:preview", "hub:submit",
 ];
-export const EVENT_CHANNELS: Array<keyof EventMap> = ["chat:token", "chat:done", "chat:error", "bench:progress", "bench:done", "pull:progress", "pull:done"];
+export const EVENT_CHANNELS: Array<keyof EventMap> = ["chat:token", "chat:done", "chat:error", "bench:progress", "bench:done", "pull:progress", "pull:done", "download:progress", "download:done"];
 export type { QuantId };

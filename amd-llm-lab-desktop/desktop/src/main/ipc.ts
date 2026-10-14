@@ -6,7 +6,7 @@ import type { EventMap, InvokeMap } from "../shared/ipc";
 import { DEFAULT_SETTINGS, type BenchResult, type Calibration, type ChatMessage, type InstalledModel, type MachineProfile, type ModelSpec, type Settings } from "../shared/types";
 import { runBenchmark } from "./bench";
 import { detectMachine } from "./detect";
-import { lookupHf } from "./hf";
+import { downloadModelFromHf, lookupHf } from "./hf";
 import { buildHubPayload, submitToHub } from "./hub";
 import { RuntimeRegistry } from "./runtime/discover";
 import { assertLoopback } from "./runtime/types";
@@ -24,6 +24,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
   let machine: MachineProfile | null = null;
   const chats = new Map<string, AbortController>();
   const pulls = new Map<string, AbortController>();
+  const downloads = new Map<string, AbortController>();
   let bench: { id: string; ctl: AbortController } | null = null;
   let machinePromise: Promise<MachineProfile> | null = null;
 
@@ -146,6 +147,25 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
   });
   handle("pull:cancel", (id) => { pulls.get(String(id))?.abort(); });
 
+  handle("download:start", async (a) => {
+    const hfRepo = String(a?.hfRepo ?? "").trim();
+    const quant = String(a?.quant ?? "").trim();
+    if (!hfRepo || !quant) throw new Error("Repository and quantization must be specified.");
+    const id = uid(), ctl = new AbortController();
+    downloads.set(id, ctl);
+    const destDir = path.join(dataDir, "models");
+    void downloadModelFromHf(
+      { hfRepo, quant, destDir },
+      (p) => emit("download:progress", { id, ...p }),
+      ctl.signal
+    )
+      .then((filePath) => emit("download:done", { id, filePath }))
+      .catch((e: Error) => emit("download:done", { id, error: ctl.signal.aborted ? "Cancelled" : friendly(e) }))
+      .finally(() => downloads.delete(id));
+    return id;
+  });
+  handle("download:cancel", (id) => { downloads.get(String(id))?.abort(); });
+
   handle("history:list", async () => (await store.read()).history);
   handle("history:delete", async (id) => (await store.update((d) => ({ ...d, history: d.history.filter((h) => h.id !== id) }))).history);
   handle("history:clear", async () => { await store.update((d) => ({ ...d, history: [] })); });
@@ -170,7 +190,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
     return out;
   });
 
-  return { dispose: () => { chats.forEach((c) => c.abort()); pulls.forEach((c) => c.abort()); bench?.ctl.abort(); }, getMachine };
+  return { dispose: () => { chats.forEach((c) => c.abort()); pulls.forEach((c) => c.abort()); downloads.forEach((c) => c.abort()); bench?.ctl.abort(); }, getMachine };
 }
 
 function friendly(e: Error): string {
