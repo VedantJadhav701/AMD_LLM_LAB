@@ -77,7 +77,11 @@ async function createWindow(): Promise<void> {
     minWidth: 960,
     minHeight: 680,
     title: "AMD LLM Lab",
-    backgroundColor: "#f7f5ef",
+    backgroundColor: "#0d0f12",
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    trafficLightPosition: { x: 18, y: 18 },
+    autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -85,9 +89,13 @@ async function createWindow(): Promise<void> {
       sandbox: true,
     },
   });
-  await window.loadURL(development
-    ? (process.env.AMD_LLM_LAB_DESKTOP_URL ?? `http://127.0.0.1:${UI_PORT}`)
-    : `http://127.0.0.1:${UI_PORT}`);
+
+  window.once("ready-to-show", () => {
+    window.show();
+  });
+
+  const appUrl = (process.env.AMD_LLM_LAB_DESKTOP_URL ?? `http://127.0.0.1:${UI_PORT}`) + "/lab";
+  await window.loadURL(appUrl);
 }
 
 function stop(process?: ChildProcess): void {
