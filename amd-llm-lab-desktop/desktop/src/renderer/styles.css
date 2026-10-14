@@ -1,18 +1,37 @@
-/* iOS-style design for Windows and macOS: system font, large titles, grouped rounded cards, tinted controls. */
-:root {
-  color-scheme: light dark;
-  --bg: #f2f2f7; --card: #ffffff; --card-2: #f7f7fa; --sidebar: #ebebf0; --fill: rgba(118,118,128,.12); --fill-2: rgba(118,118,128,.18);
-  --sep: rgba(60,60,67,.18); --text: #1c1c1e; --muted: #6c6c70; --dim: #8e8e93;
-  --accent: #007aff; --on-accent: #fff; --green: #248a3d; --lime: #4c8b0f; --yellow: #a67800; --orange: #c25e00; --red: #d70015; --gray: #6c6c70;
-  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05);
+/* Multi-theme design: Warm Cream (White & Cream), Studio White, Midnight Obsidian, AMD Radeon Dark */
+:root, :root[data-theme="cream"] {
+  color-scheme: light;
+  --bg: #f8f5ee; --card: #ffffff; --card-2: #f2ece0; --sidebar: #ede6d8; --fill: rgba(145,125,95,.10); --fill-2: rgba(145,125,95,.16);
+  --sep: rgba(140,118,90,.16); --text: #28211b; --muted: #695d52; --dim: #948577;
+  --accent: #c2410c; --on-accent: #fff; --green: #297a38; --lime: #558014; --yellow: #a87200; --orange: #c25e00; --red: #d92414; --gray: #756a62;
+  --shadow: 0 1px 3px rgba(85,65,45,.05), 0 8px 24px rgba(85,65,45,.06);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
   --titlebar: 44px; --r: 16px;
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #000; --card: #1c1c1e; --card-2: #232326; --sidebar: #161618; --fill: rgba(118,118,128,.24); --fill-2: rgba(118,118,128,.32);
-    --sep: rgba(84,84,88,.6); --text: #f5f5f7; --muted: #a1a1a6; --dim: #8e8e93; --accent: #0a84ff;
-    --green: #30d158; --lime: #a2d84a; --yellow: #ffd60a; --orange: #ff9f0a; --red: #ff453a; --gray: #98989f; --shadow: none; }
+
+:root[data-theme="white"] {
+  color-scheme: light;
+  --bg: #f4f5f8; --card: #ffffff; --card-2: #edf0f5; --sidebar: #e8ecf2; --fill: rgba(70,80,95,.08); --fill-2: rgba(70,80,95,.14);
+  --sep: rgba(70,80,95,.14); --text: #171a1f; --muted: #5c6470; --dim: #8892a0;
+  --accent: #007aff; --on-accent: #fff; --green: #248a3d; --lime: #4c8b0f; --yellow: #a67800; --orange: #c25e00; --red: #d70015; --gray: #6c6c70;
+  --shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 20px rgba(0,0,0,.05);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #090a0f; --card: #14161f; --card-2: #1b1e2a; --sidebar: #0f1118; --fill: rgba(255,255,255,.08); --fill-2: rgba(255,255,255,.14);
+  --sep: rgba(255,255,255,.12); --text: #f3f4f6; --muted: #9ca3af; --dim: #6b7280;
+  --accent: #0a84ff; --on-accent: #fff; --green: #30d158; --lime: #a2d84a; --yellow: #ffd60a; --orange: #ff9f0a; --red: #ff453a; --gray: #98989f;
+  --shadow: none;
+}
+
+:root[data-theme="cyber"] {
+  color-scheme: dark;
+  --bg: #0d0d12; --card: #16161d; --card-2: #202029; --sidebar: #111116; --fill: rgba(237,28,36,.09); --fill-2: rgba(255,255,255,.12);
+  --sep: rgba(255,255,255,.11); --text: #f9fafb; --muted: #a3a3ad; --dim: #737380;
+  --accent: #ed1c24; --on-accent: #fff; --green: #30d158; --lime: #a2d84a; --yellow: #ffd60a; --orange: #ff9f0a; --red: #ed1c24; --gray: #98989f;
+  --shadow: 0 0 25px rgba(237,28,36,.05);
 }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
@@ -97,11 +116,9 @@ select option:checked, select option:hover {
   background-color: var(--accent);
   color: var(--on-accent);
 }
-@media (prefers-color-scheme: dark) {
-  select, select option {
-    background-color: #1c1c1e;
-    color: #f5f5f7;
-  }
+select, select option {
+  background-color: var(--card);
+  color: var(--text);
 }
 textarea { resize: none; }
 label.f { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); position: relative; z-index: 5; }

@@ -7,6 +7,8 @@ import { Lab } from "./pages/Lab";
 import { MachinePage } from "./pages/Machine";
 import { Overview } from "./pages/Overview";
 import { SettingsPage } from "./pages/Settings";
+import { ThemeSwitcher } from "./components/ThemeSwitcher";
+import { ThemeChooserModal } from "./components/ThemeChooserModal";
 
 type Item = [Page, string, typeof Cpu, string];
 const GROUPS: Array<[string, Item[]]> = [
@@ -20,7 +22,12 @@ export function App() {
   const mac = info?.platform === "darwin";
   return (
     <div className="shell">
-      <header className={`titlebar ${mac ? "mac" : "win"}`}><div className="brand"><i /> AMD LLM Lab</div></header>
+      <header className={`titlebar ${mac ? "mac" : "win"}`}>
+        <div className="brand"><i /> AMD LLM Lab</div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          <ThemeSwitcher />
+        </div>
+      </header>
       <nav className="nav" aria-label="Main">
         {GROUPS.map(([title, items]) => (
           <div key={title} style={{ display: "contents" }}>
@@ -38,6 +45,8 @@ export function App() {
         {page === "overview" && <Overview />}{page === "canrun" && <CanRun />}{page === "fit" && <FitStudio />}{page === "lab" && <Lab />}
         {page === "machine" && <MachinePage />}{page === "history" && <HistoryPage />}{page === "settings" && <SettingsPage />}
       </div></main>
+      <ThemeChooserModal />
     </div>
   );
 }
+

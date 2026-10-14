@@ -83,6 +83,19 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
     if (typeof p.customRuntimeUrl === "string") { if (p.customRuntimeUrl.trim()) assertLoopback(p.customRuntimeUrl.trim()); next.customRuntimeUrl = p.customRuntimeUrl.trim(); }
     if (typeof p.hubUrl === "string") { if (p.hubUrl.trim()) { const u = new URL(p.hubUrl.trim()); if (u.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(u.hostname)) throw new Error("The hub address must use https."); } next.hubUrl = p.hubUrl.trim(); }
     if (p.kvPrecision === "f16" || p.kvPrecision === "q8_0") next.kvPrecision = p.kvPrecision;
+    if (p.theme && ["cream", "white", "dark", "cyber"].includes(p.theme)) {
+      next.theme = p.theme;
+      const win = getWindow();
+      if (win) {
+        const isDark = p.theme === "dark" || p.theme === "cyber";
+        const bg = p.theme === "cream" ? "#f7f4ee" : p.theme === "white" ? "#f4f5f7" : p.theme === "cyber" ? "#0d0d11" : "#090a0f";
+        const fg = isDark ? "#f5f5f7" : "#1c1c1e";
+        win.setBackgroundColor(bg);
+        if (process.platform !== "darwin") {
+          win.setTitleBarOverlay({ color: bg, symbolColor: fg, height: 44 });
+        }
+      }
+    }
     await store.update((d) => ({ ...d, settings: next }));
     return next;
   });

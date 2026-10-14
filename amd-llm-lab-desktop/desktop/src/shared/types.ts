@@ -214,12 +214,15 @@ export interface BenchResult {
   shared?: boolean;
 }
 
+export type ThemeId = "cream" | "white" | "dark" | "cyber";
+
 export interface Settings {
   overrides: MachineOverrides;
   defaultCtx: number;
   customRuntimeUrl: string;
   hubUrl: string;
   kvPrecision: "f16" | "q8_0";
+  theme?: ThemeId;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -228,4 +231,6 @@ export const DEFAULT_SETTINGS: Settings = {
   customRuntimeUrl: "",
   hubUrl: "",
   kvPrecision: "f16",
+  theme: "cream",
 };
+
