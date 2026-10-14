@@ -8,6 +8,12 @@
   --mono: ui-monospace, "SF Mono", Consolas, monospace;
   --titlebar: 40px;
 }
+:root[data-theme="light"] {
+  --bg: #f8f8fa; --panel: #ffffff; --panel-2: #f0f0f4; --line: #e0e0e6; --line-2: #cccccc;
+  --text: #111113; --muted: #555560; --dim: #888894;
+  --red: #cc1018; --red-d: #9e0c12;
+  --great: #1a9e65; --good: #5d9e24; --usable: #b58900; --slow: #c46816; --crawl: #c22d2d; --no: #8a8a96;
+}
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--text); font: 400 15px/1.45 var(--body); -webkit-font-smoothing: antialiased; overflow: hidden; }
