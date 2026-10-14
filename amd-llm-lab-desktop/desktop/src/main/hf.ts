@@ -37,9 +37,24 @@ export interface DownloadProgress {
   speedMBps: number;
 }
 
+function matchesQuant(filePath: string, quant: string): boolean {
+  const p = filePath.toLowerCase();
+  const q = quant.toLowerCase();
+  const qClean = q.replace(/[^a-z0-9_]/g, "");
+  const qDash = q.replace(/[^a-z0-9-]/g, "");
+  return (
+    p.includes(`.${qClean}.`) ||
+    p.includes(`-${qClean}.`) ||
+    p.includes(`_${qClean}.`) ||
+    p.includes(`.${qDash}.`) ||
+    p.includes(`-${qDash}.`) ||
+    p.includes(qClean) ||
+    p.includes(qDash)
+  );
+}
+
 /** Finds the best matching GGUF repo or file on Hugging Face */
 export async function findGgufFile(hfRepo: string, quant: string): Promise<{ repo: string; file: string; sizeBytes?: number }> {
-  const qClean = quant.toLowerCase().replace(/[^a-z0-9_]/g, "");
   // If hfRepo already ends in -GGUF, check its tree
   const candidates = hfRepo.toLowerCase().endsWith("-gguf")
     ? [hfRepo]
@@ -57,8 +72,8 @@ export async function findGgufFile(hfRepo: string, quant: string): Promise<{ rep
       const tree = (await getJson(`https://huggingface.co/api/models/${repo}/tree/main`)) as Array<{ path: string; size?: number; type: string }>;
       if (Array.isArray(tree)) {
         const ggufs = tree.filter((f) => f.path.toLowerCase().endsWith(".gguf"));
-        // Match exact quant, e.g. .q4_k_m.gguf
-        const match = ggufs.find((f) => f.path.toLowerCase().includes(qClean)) || ggufs[0];
+        // Strictly match requested quant
+        const match = ggufs.find((f) => matchesQuant(f.path, quant));
         if (match) {
           return { repo, file: match.path, sizeBytes: match.size };
         }
@@ -71,16 +86,25 @@ export async function findGgufFile(hfRepo: string, quant: string): Promise<{ rep
   // Fallback: search Hugging Face for GGUF repos for this model
   try {
     const modelBase = hfRepo.split("/").pop() || hfRepo;
-    const searchUrl = `https://huggingface.co/api/models?search=${encodeURIComponent(`${modelBase} GGUF`)}&limit=5`;
+    const searchUrl = `https://huggingface.co/api/models?search=${encodeURIComponent(`${modelBase} GGUF`)}&limit=15`;
     const searchResults = (await getJson(searchUrl)) as Array<{ id: string }>;
     if (Array.isArray(searchResults)) {
-      for (const item of searchResults) {
+      // Prioritize repos whose name is closer to the original base model
+      const sorted = [...searchResults].sort((a, b) => {
+        const aDirect = a.id.toLowerCase().includes(modelBase.toLowerCase());
+        const bDirect = b.id.toLowerCase().includes(modelBase.toLowerCase());
+        if (aDirect && !bDirect) return -1;
+        if (!aDirect && bDirect) return 1;
+        return 0;
+      });
+
+      for (const item of sorted) {
         if (!item?.id || candidates.includes(item.id)) continue;
         try {
           const tree = (await getJson(`https://huggingface.co/api/models/${item.id}/tree/main`)) as Array<{ path: string; size?: number; type: string }>;
           if (Array.isArray(tree)) {
             const ggufs = tree.filter((f) => f.path.toLowerCase().endsWith(".gguf"));
-            const match = ggufs.find((f) => f.path.toLowerCase().includes(qClean)) || ggufs[0];
+            const match = ggufs.find((f) => matchesQuant(f.path, quant));
             if (match) {
               return { repo: item.id, file: match.path, sizeBytes: match.size };
             }
@@ -94,7 +118,7 @@ export async function findGgufFile(hfRepo: string, quant: string): Promise<{ rep
     // ignore search error
   }
 
-  throw new Error(`Could not find a GGUF file for ${hfRepo} with quant ${quant} on Hugging Face.`);
+  throw new Error(`Could not find a ready-made "${quant.toUpperCase()}" GGUF for "${hfRepo}" on Hugging Face.`);
 }
 
 /** Downloads a GGUF model directly from Hugging Face to local disk with streaming progress */
