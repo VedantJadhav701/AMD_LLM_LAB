@@ -75,7 +75,7 @@ export function Lab() {
     <div className="chat">
       <div className="msgs" aria-live="polite">
         {!msgs.length ? <div className="dim" style={{ margin: "auto" }}>Say something to {sel?.name ?? "the model"}. Speed is shown under each reply.</div> : null}
-        {msgs.map((m, i) => <div key={i}><div className={`msg ${m.role}`}>{m.content || "…"}</div>{m.stats?.decodeTokS ? <div className="dim mono" style={{ fontSize: 12, marginTop: 4, textAlign: m.role === "user" ? "right" : "left" }}>{fmt(m.stats.decodeTokS)} tok/s · {m.stats.tokens} tokens{m.stats.ttftS ? ` · first token ${fmt(m.stats.ttftS, 2)}s` : ""}</div> : null}</div>)}
+        {msgs.map((m, i) => <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}><div className={`msg ${m.role}`}>{m.content || "…"}</div>{m.stats?.decodeTokS ? <div className="dim mono" style={{ fontSize: 12, marginTop: 4 }}>{fmt(m.stats.decodeTokS)} tok/s · {m.stats.tokens} tokens{m.stats.ttftS ? ` · first token ${fmt(m.stats.ttftS, 2)}s` : ""}</div> : null}</div>)}
         <div ref={end} />
       </div>
       <div className="row" style={{ marginTop: 12, flexWrap: "nowrap" }}>

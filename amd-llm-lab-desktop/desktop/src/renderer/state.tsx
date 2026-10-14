@@ -5,7 +5,7 @@ import type { Calibration, MachineProfile, RuntimeStatus, Settings } from "../sh
 declare global { interface Window { lab: LabApi } }
 export const api = { invoke: <K extends keyof InvokeMap>(c: K, a?: InvokeMap[K][0]) => window.lab.invoke(c, a), on: <K extends keyof EventMap>(c: K, cb: (p: EventMap[K]) => void) => window.lab.on(c, cb) };
 
-export type Page = "overview" | "canrun" | "lab" | "machine" | "history" | "settings";
+export type Page = "overview" | "canrun" | "fit" | "lab" | "machine" | "history" | "settings";
 interface Ctx {
   page: Page; go: (p: Page, arg?: unknown) => void; navArg: unknown;
   info: AppInfo | null; machine: MachineProfile | null; machineError: string | null; scanning: boolean; rescan: () => Promise<void>;

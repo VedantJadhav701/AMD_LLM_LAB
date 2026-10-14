@@ -67,7 +67,7 @@ export function CanRun() {
                 <button className="btn primary" onClick={() => go("lab", { catalogId: spec.id })}>Test in the Lab</button>
                 {spec.maxContext && v.maxContext ? <span className="dim" style={{ fontSize: 13 }}>Longest context that fits: {v.maxContext.toLocaleString()} tokens</span> : null}
               </div>
-              {v.alternatives.length ? <details style={{ marginTop: 16 }}><summary className="muted">Other ways to run it</summary>{v.alternatives.map((p, i) => <div key={i} className="row between" style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}><span>{p.where}</span><Speed plan={p} big={false} /></div>)}</details> : null}
+              {v.alternatives.length ? <details style={{ marginTop: 16 }}><summary className="muted">Other ways to run it</summary>{v.alternatives.map((p, i) => <div key={i} className="row between" style={{ padding: "10px 0", borderBottom: ".5px solid var(--sep)" }}><span>{p.where}</span><Speed plan={p} big={false} /></div>)}</details> : null}
             </div>
           ) : null}
         </div>

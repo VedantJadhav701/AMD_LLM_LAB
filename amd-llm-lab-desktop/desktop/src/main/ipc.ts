@@ -14,7 +14,7 @@ import { JsonStore } from "./store";
 
 interface Persisted { settings: Settings; history: BenchResult[]; calibration: Calibration; fingerprint: string | null }
 const fingerprint = (m: MachineProfile) => `${m.cpu.name}|${m.gpus.map((g) => g.name).join("+")}|${Math.round(m.ram.totalGiB)}`;
-const EXTERNAL_OK = [/^https:\/\/ollama\.com(\/|$)/, /^https:\/\/lmstudio\.ai(\/|$)/, /^https:\/\/github\.com\/VedantJadhav701\/AMD_LLM_LAB(\/|$)/, /^https:\/\/huggingface\.co\/[\w.-]+\/[\w.-]+\/?$/];
+const EXTERNAL_OK = [/^https:\/\/ollama\.com(\/|$)/, /^https:\/\/lmstudio\.ai(\/|$)/, /^https:\/\/github\.com\/VedantJadhav701\/AMD_LLM_LAB(\/|$)/, /^https:\/\/huggingface\.co\/[\w.-]+\/[\w.-]+\/?$/, /^https:\/\/huggingface\.co\/models\?search=[\w%+.\-]{1,120}$/];
 const MAX_MSG = 200_000;
 
 export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: string = app.getPath("userData")) {
@@ -96,7 +96,7 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
   handle("decide:evaluate", async (a) => {
     const [m, s, d] = [await getMachine(), await settings(), await store.read()];
     const spec = specFor(String(a?.modelId));
-    return { spec, verdicts: evaluateAllQuants(m, spec, { ctx: clampCtx(a?.ctx, s.defaultCtx), kvBytes: kvBytes(s), calibration: d.calibration }) };
+    return { spec, verdicts: evaluateAllQuants(m, spec, { ctx: clampCtx(a?.ctx, s.defaultCtx), kvBytes: kvBytes(s), calibration: d.calibration }, a?.extended === true) };
   });
 
   handle("runtime:refresh", async () => registry.refresh((await settings()).customRuntimeUrl));

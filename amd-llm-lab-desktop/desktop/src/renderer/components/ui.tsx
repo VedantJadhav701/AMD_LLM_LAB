@@ -35,7 +35,7 @@ export function Bars({ bars, total }: { bars: MemoryBar[]; total: number }) {
           <div key={b.label}>
             <div className="row between" style={{ fontSize: 13, marginBottom: 6 }}>
               <span className="muted">{b.label}</span>
-              <span className={over ? "" : "dim"} style={over ? { color: "var(--crawl)" } : undefined}>{fmtGiB(b.usedGiB)} of {fmtGiB(b.capacityGiB)}</span>
+              <span className={over ? "" : "dim"} style={over ? { color: "var(--red)" } : undefined}>{fmtGiB(b.usedGiB)} of {fmtGiB(b.capacityGiB)}</span>
             </div>
             <div className="bar" role="img" aria-label={`${b.label}: ${fmtGiB(b.usedGiB)} used of ${fmtGiB(b.capacityGiB)}`}>
               <i className={over ? "red" : pct > 85 ? "warn" : ""} style={{ width: `${pct}%` }} />

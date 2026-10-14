@@ -14,7 +14,7 @@ export function HistoryPage() {
     catch (e) { setShare({ id, error: (e as Error).message }); }
   }
   return (<>
-    <div className="eyebrow">History</div><h1>Your benchmark runs</h1>
+    <h1>Your benchmark runs</h1>
     <p className="lead">Stored only on this computer.</p>
     {!rows ? null : rows.length === 0 ? <Empty title="No runs yet" action={<button className="btn primary" onClick={() => go("lab")}>Open the Lab</button>}>Run a benchmark and it is saved here.</Empty> : (
       <div className="card" style={{ padding: 0, overflowX: "auto" }}><table>
@@ -33,15 +33,16 @@ export function HistoryPage() {
           </tr>))}</tbody>
       </table></div>)}
     {share ? (
-      <div className="card" style={{ marginTop: 16 }}>
+      <div className="sheet-back" onClick={() => setShare(null)}><div className="sheet" role="dialog" aria-label="Share with the community hub" onClick={(e) => e.stopPropagation()}>
+        <div className="grab" />
         <h2>Share with the community hub</h2>
         {share.error ? <div className="flag warn">{share.error}</div> : share.done ? <div>{share.done}</div> : <>
           <p className="muted">This is exactly what would be sent. It contains no name, account or file paths.</p>
-          <pre className="mono" style={{ background: "var(--bg)", padding: 12, overflow: "auto", maxHeight: 260, border: "1px solid var(--line)" }}>{JSON.stringify(share.payload, null, 2)}</pre>
-          {settings?.hubUrl ? <button className="btn primary" onClick={() => submit(share.id)}>Send</button> : <div className="flag info">Add the hub address in Settings to enable sending.</div>}
+          <pre className="mono" style={{ background: "var(--fill)", borderRadius: 12, padding: 12, overflow: "auto", maxHeight: 260 }}>{JSON.stringify(share.payload, null, 2)}</pre>
+          {settings?.hubUrl ? <button className="btn primary" style={{ marginTop: 12 }} onClick={() => submit(share.id)}>Send</button> : <div className="flag info" style={{ marginTop: 12 }}>Add the hub address in Settings to enable sending.</div>}
         </>}
-        <button className="btn ghost" style={{ marginTop: 10 }} onClick={() => setShare(null)}>Close</button>
-      </div>) : null}
+        <div className="row" style={{ marginTop: 12 }}><button className="btn ghost" onClick={() => setShare(null)}>Close</button></div>
+      </div></div>) : null}
     {rows?.length ? <button className="btn sm ghost" style={{ marginTop: 16 }} onClick={async () => { await api.invoke("history:clear"); setRows([]); }}>Clear all</button> : null}
   </>);
 }

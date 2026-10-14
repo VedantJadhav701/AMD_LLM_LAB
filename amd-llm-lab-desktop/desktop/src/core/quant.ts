@@ -11,7 +11,7 @@ export interface QuantInfo {
   bpw: number;
   /** 0..1 multiplier used only when ranking models by expected capability. */
   quality: number;
-  tier: "lossless" | "near-lossless" | "small loss" | "noticeable loss" | "large loss";
+  tier: "lossless" | "near-lossless" | "small loss" | "noticeable loss" | "large loss" | "experimental";
   blurb: string;
 }
 
@@ -24,13 +24,25 @@ export const QUANTS: Record<QuantId, QuantInfo> = {
   Q4_K_M: { id: "Q4_K_M", label: "Q4_K_M", bpw: 4.9, quality: 0.95, tier: "small loss", blurb: "The usual default. Small, hard-to-notice loss." },
   Q3_K_M: { id: "Q3_K_M", label: "Q3_K_M", bpw: 3.9, quality: 0.87, tier: "noticeable loss", blurb: "Noticeably weaker. Use only if Q4 will not fit." },
   Q2_K: { id: "Q2_K", label: "Q2_K", bpw: 3.2, quality: 0.7, tier: "large loss", blurb: "Large quality loss. Last resort." },
+  IQ4_XS: { id: "IQ4_XS", label: "IQ4_XS", bpw: 4.46, quality: 0.945, tier: "small loss", blurb: "A little smaller than Q4_K_M at similar quality." },
+  IQ3_S: { id: "IQ3_S", label: "IQ3_S", bpw: 3.66, quality: 0.88, tier: "noticeable loss", blurb: "Better than Q3_K_S at similar size. Works best with an importance matrix." },
+  IQ3_XXS: { id: "IQ3_XXS", label: "IQ3_XXS", bpw: 3.25, quality: 0.84, tier: "noticeable loss", blurb: "Small and still usable on larger models." },
+  IQ2_M: { id: "IQ2_M", label: "IQ2_M", bpw: 2.93, quality: 0.78, tier: "large loss", blurb: "About 2.9 bits. Usable on big models, weak on small ones." },
+  IQ2_S: { id: "IQ2_S", label: "IQ2_S", bpw: 2.74, quality: 0.74, tier: "experimental", blurb: "Very aggressive. Expect mistakes." },
+  IQ2_XS: { id: "IQ2_XS", label: "IQ2_XS", bpw: 2.59, quality: 0.7, tier: "experimental", blurb: "Very aggressive. Expect mistakes." },
+  IQ2_XXS: { id: "IQ2_XXS", label: "IQ2_XXS", bpw: 2.38, quality: 0.66, tier: "experimental", blurb: "Very aggressive. Often incoherent below 30B parameters." },
+  IQ1_M: { id: "IQ1_M", label: "IQ1_M", bpw: 2.15, quality: 0.55, tier: "experimental", blurb: "Not truly 1 bit: about 2.1 bits in practice. Mostly a curiosity on small models." },
+  IQ1_S: { id: "IQ1_S", label: "IQ1_S", bpw: 2.0, quality: 0.45, tier: "experimental", blurb: "Smallest option, about 2 bits in practice. Output is often incoherent on models under 30B." },
   MXFP4: { id: "MXFP4", label: "MXFP4", bpw: 4.5, quality: 0.97, tier: "near-lossless", blurb: "The model's native 4-bit format." },
 };
 
 export const GENERIC_QUANTS: QuantId[] = ["Q8_0", "Q6_K", "Q5_K_M", "Q4_K_M", "Q3_K_M", "Q2_K"];
 
-export function quantsFor(model: ModelSpec): QuantId[] {
-  return model.onlyQuant ? [model.onlyQuant] : GENERIC_QUANTS;
+/** Every level Fit Studio offers, best quality first. */
+export const EXTENDED_QUANTS: QuantId[] = ["Q8_0", "Q6_K", "Q5_K_M", "Q4_K_M", "IQ4_XS", "Q3_K_M", "IQ3_S", "IQ3_XXS", "Q2_K", "IQ2_M", "IQ2_S", "IQ2_XS", "IQ2_XXS", "IQ1_M", "IQ1_S"];
+
+export function quantsFor(model: ModelSpec, extended = false): QuantId[] {
+  return model.onlyQuant ? [model.onlyQuant] : extended ? EXTENDED_QUANTS : GENERIC_QUANTS;
 }
 
 /** Size of the weights file in GiB. */

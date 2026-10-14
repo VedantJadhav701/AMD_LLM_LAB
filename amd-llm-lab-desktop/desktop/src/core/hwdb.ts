@@ -19,7 +19,6 @@ const SPECS: Array<[RegExp, number]> = [
   [/RTX\s*3080\s*Ti/i, 912], [/RTX\s*3080/i, 760],
   [/RTX\s*3070.*Laptop/i, 448], [/RTX\s*3070/i, 448],
   [/RTX\s*3060\s*Ti/i, 448], [/RTX\s*3060.*Laptop/i, 336], [/RTX\s*3060/i, 360],
-  [/RTX\s*3050\s*Ti.*Laptop/i, 192], [/RTX\s*3050.*Laptop/i, 192], [/RTX\s*3050\s*6GB/i, 168], [/RTX\s*3050/i, 224],
   // AMD discrete
   [/Radeon\s*AI\s*PRO\s*R9700/i, 640],
   [/RX\s*9070\s*XT/i, 640], [/RX\s*9070/i, 576], [/RX\s*9060\s*XT/i, 322],

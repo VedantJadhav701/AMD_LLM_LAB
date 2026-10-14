@@ -14,7 +14,7 @@ export interface InvokeMap {
   "catalog:list": [void, ModelSpec[]];
   "hf:lookup": [string, { spec: ModelSpec; warnings: string[] }];
   "decide:recommend": [{ goal: Goal; ctx: number }, Recommendation[]];
-  "decide:evaluate": [{ modelId: string; ctx: number }, { spec: ModelSpec; verdicts: Verdict[] }];
+  "decide:evaluate": [{ modelId: string; ctx: number; extended?: boolean }, { spec: ModelSpec; verdicts: Verdict[] }];
   "runtime:refresh": [void, RuntimeStatus[]];
   "runtime:models": [string, InstalledModel[]];
   "chat:start": [{ runtimeId: string; model: string; messages: ChatMessage[]; ctx: number }, string];

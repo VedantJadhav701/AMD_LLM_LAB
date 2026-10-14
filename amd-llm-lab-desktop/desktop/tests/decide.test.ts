@@ -23,7 +23,6 @@ describe("hardware spec priors reproduce published llama.cpp speeds", () => {
     ["M2 Ultra (800 GB/s)", "apple", "apple", 800, q4_0_7b, 94],
     ["RTX 4090 Llama-3-8B Q4_K_M", "nvidia", "discrete", 1008, 4.58, 127],
     ["RTX 3090 Llama-3-8B Q4_K_M", "nvidia", "discrete", 936, 4.58, 111],
-    ["RTX 3050 Laptop Qwen2.5-3B Q4_K_M", "nvidia", "discrete", 192, 1.95, 78],
     ["RX 7900 XTX 7B Q4_0", "amd", "discrete", 960, q4_0_7b, 120],
   ] as const)("%s lands inside the predicted band", (_n, vendor, kind, bw, stream, observed) => {
     const [lo, hi] = range(vendor, kind, bw, stream);

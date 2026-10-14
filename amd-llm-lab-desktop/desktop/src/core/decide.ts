@@ -61,6 +61,11 @@ export function applyOverrides(m: MachineProfile): MachineProfile {
     const [g] = out.gpus.splice(o.gpuIndex, 1);
     out.gpus.unshift(g);
   }
+  // No GPU was detected but the user says they have one: believe them instead of silently ignoring the setting.
+  if (!out.gpus.length && o.vramGiB != null && !o.forceCpuOnly) {
+    out.gpus.push({ id: "manual", vendor: "other", name: "GPU (entered manually)", kind: out.unified ? "apple" : "discrete", dedicatedGiB: o.vramGiB, freeGiB: o.vramGiB, sharedGiB: null,
+      bandwidthGBps: o.bandwidthGBps ?? guessDiscreteBandwidth(o.vramGiB), bandwidthSource: o.bandwidthGBps != null ? "spec" : "guess", accel: "yes" });
+  }
   const g0 = out.gpus[0];
   if (g0 && o.vramGiB != null) {
     g0.dedicatedGiB = o.vramGiB;
@@ -275,7 +280,8 @@ export function evaluate(machine: MachineProfile, model: ModelSpec, quant: Quant
   if (pools.gpu?.kind === "discrete" && pools.gpu.info.bandwidthSource !== "spec") flags.push({ severity: "info", code: "gpu-unknown", text: "This GPU is not in the spec table, so its speed is a rough guess. Run the quick test to measure it." });
   if (chosen?.basis === "guess" && !(pools.gpu?.info.bandwidthSource !== "spec" && kind === "gpu")) flags.push({ severity: "info", code: "no-probe", text: "Memory speed has not been measured yet. Use Measure memory speed on the Machine page to tighten this estimate." });
   if (model.activeParamsB) flags.push({ severity: "info", code: "moe", text: `Only about ${model.activeParamsB}B of ${model.paramsB}B parameters work on each token, so it generates like a ${Math.round(model.activeParamsB)}B model but still needs the full ${fmtGiB(fileGiB)} in memory.` });
-  if (quant === "Q3_K_M" || quant === "Q2_K") flags.push({ severity: "warn", code: "quality", text: `${QUANTS[quant].label} loses noticeable quality (${QUANTS[quant].tier}). Prefer a smaller model at Q4_K_M if one runs well.` });
+  if (QUANTS[quant].tier === "experimental") flags.push({ severity: "bad", code: "quality", text: `${QUANTS[quant].label} is experimental (about ${QUANTS[quant].bpw} bits per weight). ${QUANTS[quant].blurb} Try it to see what is possible, not for work you rely on.` });
+  else if (quant === "Q3_K_M" || quant === "Q2_K" || QUANTS[quant].tier === "large loss" || QUANTS[quant].tier === "noticeable loss") flags.push({ severity: "warn", code: "quality", text: `${QUANTS[quant].label} loses noticeable quality (${QUANTS[quant].tier}). Prefer a smaller model at Q4_K_M if one runs well.` });
   const disk = m.diskFreeGiB;
   const diskOk = disk == null ? null : disk >= fileGiB + 2;
   if (diskOk === false) flags.push({ severity: "warn", code: "disk", text: `The download is about ${fmtGiB(fileGiB)} and you have ${fmtGiB(disk!)} free.` });
@@ -299,8 +305,8 @@ export function evaluate(machine: MachineProfile, model: ModelSpec, quant: Quant
   };
 }
 
-export function evaluateAllQuants(machine: MachineProfile, model: ModelSpec, opts: EvalOptions): Verdict[] {
-  return quantsFor(model).map((q) => evaluate(machine, model, q, opts));
+export function evaluateAllQuants(machine: MachineProfile, model: ModelSpec, opts: EvalOptions, extended = false): Verdict[] {
+  return quantsFor(model, extended).map((q) => evaluate(machine, model, q, opts));
 }
 
 /** Capability proxy in billions of parameters. Mixture-of-experts uses the geometric mean of total and active. */

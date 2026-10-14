@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, session, shell } from "electron";
+import { app, BrowserWindow, Menu, nativeTheme, session, shell } from "electron";
 import path from "node:path";
 import { registerIpc } from "./ipc";
 
@@ -20,13 +20,17 @@ if (process.env.LAB_USER_DATA) app.setPath("userData", process.env.LAB_USER_DATA
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on("second-instance", () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
+const theme = () => (nativeTheme.shouldUseDarkColors ? { bg: "#000000", fg: "#f5f5f7" } : { bg: "#f2f2f7", fg: "#1c1c1e" });
+
 function createWindow() {
   const mac = process.platform === "darwin";
+  const t = theme();
   win = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 980, minHeight: 640, show: false, backgroundColor: "#0b0b0c", title: "AMD LLM Lab",
-    ...(mac ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 16, y: 16 } } : { titleBarStyle: "hidden" as const, titleBarOverlay: { color: "#0b0b0c", symbolColor: "#e8e8e8", height: 40 } }),
+    width: 1280, height: 820, minWidth: 980, minHeight: 640, show: false, backgroundColor: t.bg, title: "AMD LLM Lab",
+    ...(mac ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : { titleBarStyle: "hidden" as const, titleBarOverlay: { color: t.bg, symbolColor: t.fg, height: 44 } }),
     webPreferences: { preload: path.join(__dirname, "../preload/index.js"), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false },
   });
+  nativeTheme.on("updated", () => { const n = theme(); win?.setBackgroundColor(n.bg); if (process.platform !== "darwin") win?.setTitleBarOverlay({ color: n.bg, symbolColor: n.fg, height: 44 }); });
   win.once("ready-to-show", () => win?.show());
   win.on("closed", () => { win = null; });
   // The window may only ever show our own UI. Anything else opens in the system browser, and only if allowlisted.

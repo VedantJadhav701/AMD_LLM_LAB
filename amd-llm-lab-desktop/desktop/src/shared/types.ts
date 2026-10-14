@@ -2,7 +2,9 @@
 // Sizes are in GiB (2^30 bytes) because that is what Windows, macOS and llama.cpp show.
 
 export type Platform = "win32" | "darwin" | "linux";
-export type QuantId = "F16" | "Q8_0" | "Q6_K" | "Q5_K_M" | "Q4_K_M" | "Q3_K_M" | "Q2_K" | "MXFP4";
+export type QuantId =
+  | "F16" | "Q8_0" | "Q6_K" | "Q5_K_M" | "Q4_K_M" | "IQ4_XS" | "Q3_K_M" | "IQ3_S" | "IQ3_XXS"
+  | "Q2_K" | "IQ2_M" | "IQ2_S" | "IQ2_XS" | "IQ2_XXS" | "IQ1_M" | "IQ1_S" | "MXFP4";
 
 export interface ModelSpec {
   id: string;
