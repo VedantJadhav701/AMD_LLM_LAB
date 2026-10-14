@@ -1,6 +1,8 @@
 {
   "name": "amd-llm-lab-dashboard",
   "version": "0.1.0",
+  "description": "AMD LLM Lab Desktop - Understand LLM inference performance before you run the model",
+  "author": "Vedant Jadhav",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
