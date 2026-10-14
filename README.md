@@ -45,6 +45,27 @@ AMD LLM Lab includes a native cross-platform desktop application built with Elec
 - 💬 **One-Click Engine Bridge & Chat**: Directly import any downloaded GGUF file into Ollama in seconds (`FROM "path/to/model.gguf"`) or connect to LM Studio, llama.cpp server, and AMD Lemonade.
 - 🔍 **Native Hardware Probing**: Accurately detects AMD Ryzen APUs, Radeon discrete GPUs, Ryzen AI NPUs, Apple Silicon M1–M4 Unified Memory, and NVIDIA hardware.
 
+### 📸 Desktop Application Tour
+
+<p align="center">
+  <img src="public/app_overview.png" width="92%" alt="App Overview" />
+</p>
+<p align="center">
+  <em>Overview Dashboard: Hardware profiling, memory bandwidth metrics, and top model recommendations.</em>
+</p>
+
+<br />
+
+| Fit Studio & In-App Downloader | Can I Run It? Budget Diagnostics |
+| :---: | :---: |
+| <img src="public/fitstudio.png" width="100%" alt="Fit Studio" /> | <img src="public/can_i_run_it.png" width="100%" alt="Can I Run It" /> |
+| *Fit Studio: Compare quants from FP16 down to 1-bit and stream directly.* | *Can I Run It: Deep VRAM budget breakdown and token throughput.* |
+
+| Local Chat & Ollama / LM Studio | Benchmark History & Calibration |
+| :---: | :---: |
+| <img src="public/chat_interface.png" width="100%" alt="Chat Interface" /> | <img src="public/history.png" width="100%" alt="Benchmark History" /> |
+| *Chat Interface: Formatted responses, live tok/s stats, and model library.* | *History: Track past local runs and calibrated performance.* |
+
 ---
 
 ## 🌟 Overview

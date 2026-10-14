@@ -19,6 +19,8 @@ backend/data/hub.sqlite
 # Temporary scratch & image artifacts
 *.png
 !amd-llm-lab-desktop/desktop/build/icon.png
+!public/*.png
+!dashboard/public/screenshots/*.png
 *.jpeg
 *.jpg
 claude files/

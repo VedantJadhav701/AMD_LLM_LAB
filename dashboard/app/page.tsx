@@ -95,12 +95,12 @@ export default function LandingPage() {
           </Link>
 
           <nav id="lp-nav" className={`lp-nav ${menuOpen ? "is-open" : ""}`} aria-label="Primary">
+            <a href="#desktop" onClick={closeMenu}>Desktop App</a>
             <a href="#research" onClick={closeMenu}>Research</a>
             <a href="#measurements" onClick={closeMenu}>Benchmarks</a>
             <a href="#hardware" onClick={closeMenu}>Hardware</a>
             <a href="#setup" onClick={closeMenu}>Setup</a>
           </nav>
-
           <div className="lp-actions">
             <a className="icon-btn" href={repo} target="_blank" rel="noreferrer" aria-label="GitHub repository">
               <Github size={18} />
@@ -178,6 +178,56 @@ export default function LandingPage() {
               </div>
             </>
           )}
+        </section>
+
+        {/* Desktop App Tour Showcase */}
+        <section id="desktop" className="section section--raised">
+          <div style={{ maxWidth: 840, margin: "0 auto 36px", textAlign: "center" }}>
+            <span className="amd-mark" style={{ display: "inline-block", marginBottom: 12 }}>AMD LLM Lab Desktop</span>
+            <h2>Run, Quantize & Benchmark LLMs Directly on Your PC</h2>
+            <p className="lede">
+              The native desktop application profiles your hardware, recommends the best models that fit in RAM, downloads GGUFs directly from Hugging Face with live progress, and connects with one click to Ollama & LM Studio.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
+              <a href={`${repo}/releases/latest`} target="_blank" rel="noreferrer" className="btn btn--solid">
+                ⚡ Download Windows Installer (.exe) <ArrowUpRight size={16} />
+              </a>
+              <a href={`${repo}/releases/latest`} target="_blank" rel="noreferrer" className="btn">
+                🍎 Download macOS DMG (M1–M4 & Intel) <ArrowUpRight size={16} />
+              </a>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, textAlign: "left" }}>
+            <div style={{ background: "var(--card-bg, #111)", padding: 18, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <img src="/screenshots/app_overview.png" alt="Overview Dashboard" style={{ width: "100%", borderRadius: 10, display: "block", marginBottom: 14 }} />
+              <h3 style={{ fontSize: 17, marginBottom: 6 }}>1. Hardware Profiling & Recommendations</h3>
+              <p style={{ fontSize: 13.5, color: "var(--muted, #888)", margin: 0, lineHeight: 1.5 }}>
+                Profiles AMD Ryzen APUs, Radeon GPUs, Ryzen AI NPUs, and Apple Silicon Unified Memory to recommend the fastest and largest models that fit in RAM.
+              </p>
+            </div>
+            <div style={{ background: "var(--card-bg, #111)", padding: 18, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <img src="/screenshots/fitstudio.png" alt="Fit Studio" style={{ width: "100%", borderRadius: 10, display: "block", marginBottom: 14 }} />
+              <h3 style={{ fontSize: 17, marginBottom: 6 }}>2. Fit Studio & In-App Downloader</h3>
+              <p style={{ fontSize: 13.5, color: "var(--muted, #888)", margin: 0, lineHeight: 1.5 }}>
+                Compare quants from FP16 down to 1-bit on an interactive ladder table, streaming matching GGUF weights directly to disk with live speed tracking.
+              </p>
+            </div>
+            <div style={{ background: "var(--card-bg, #111)", padding: 18, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <img src="/screenshots/chat_interface.png" alt="Chat & Local Library" style={{ width: "100%", borderRadius: 10, display: "block", marginBottom: 14 }} />
+              <h3 style={{ fontSize: 17, marginBottom: 6 }}>3. Local Library & One-Click Chat</h3>
+              <p style={{ fontSize: 13.5, color: "var(--muted, #888)", margin: 0, lineHeight: 1.5 }}>
+                Inspects downloaded models, registers `.gguf` weights into Ollama in seconds with one click, and chats with live tok/s performance counters.
+              </p>
+            </div>
+            <div style={{ background: "var(--card-bg, #111)", padding: 18, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <img src="/screenshots/can_i_run_it.png" alt="Can I Run It" style={{ width: "100%", borderRadius: 10, display: "block", marginBottom: 14 }} />
+              <h3 style={{ fontSize: 17, marginBottom: 6 }}>4. Deep VRAM Budget Diagnostics</h3>
+              <p style={{ fontSize: 13.5, color: "var(--muted, #888)", margin: 0, lineHeight: 1.5 }}>
+                Visualizes weights, KV cache at custom context limits, and memory thresholds to identify whether a model fits, needs apps closed, or will OOM.
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* Research */}
