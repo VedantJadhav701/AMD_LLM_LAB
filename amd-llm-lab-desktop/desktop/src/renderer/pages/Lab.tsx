@@ -16,31 +16,52 @@ export function Lab() {
   const [bench, setBench] = useState<{ step: string; frac: number } | null>(null); const [last, setLast] = useState<BenchResult | null>(null); const [benchErr, setBenchErr] = useState<string | null>(null);
   const [pullName, setPullName] = useState(""); const [pull, setPull] = useState<string | null>(null);
   const [importing, setImporting] = useState(false); const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [downloadedList, setDownloadedList] = useState<Array<{ name: string; filePath: string; sizeGiB: number }>>([]);
   const end = useRef<HTMLDivElement>(null); const ctx = settings?.defaultCtx ?? 4096;
   const nav = navArg as { catalogId?: string; downloadedFile?: string; modelName?: string } | null;
   const want = nav?.catalogId;
   const downloadedFile = nav?.downloadedFile;
   const downloadedModelName = nav?.modelName;
 
+  const refreshDownloaded = async () => {
+    try {
+      const list = await api.invoke("models:downloaded");
+      setDownloadedList(list || []);
+    } catch {
+      setDownloadedList([]);
+    }
+  };
+
+  useEffect(() => { void refreshDownloaded(); }, []);
   useEffect(() => { if (!rtId && online[0]) setRtId(online[0].id); }, [online, rtId]);
   const loadModels = async (id = rtId) => { if (!id) return; try { const m = await api.invoke("runtime:models", id); setModels(m); setLoadErr(null); setModel((cur) => cur && m.some((x) => x.name === cur) ? cur : m.find((x) => (downloadedModelName && x.name === downloadedModelName) || (want && x.catalogId === want))?.name ?? m[0]?.name ?? ""); } catch (e) { setLoadErr((e as Error).message); } };
   useEffect(() => { void loadModels(); /* eslint-disable-next-line */ }, [rtId]);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [msgs]);
 
-  const handleImportToOllama = async () => {
-    if (!downloadedFile || !downloadedModelName) return;
-    setImporting(true); setImportMsg("Registering GGUF weights into Ollama...");
+  const importModel = async (dm: { name: string; filePath: string }) => {
+    setImporting(true);
+    const cleanName = dm.name
+      .toLowerCase()
+      .replace(/\.gguf$/i, "")
+      .replace(/[^a-z0-9._-]/g, "-");
+    setImportMsg(`Registering ${cleanName} in Ollama...`);
     try {
-      await api.invoke("ollama:importGguf", { name: downloadedModelName, ggufPath: downloadedFile });
-      setImportMsg("✓ Model ready in Ollama! Selected below.");
+      await api.invoke("ollama:importGguf", { name: cleanName, ggufPath: dm.filePath });
+      setImportMsg(`✓ ${cleanName} ready in Ollama!`);
       await refreshRuntimes();
       await loadModels();
-      setModel(downloadedModelName);
+      setModel(cleanName);
+      await refreshDownloaded();
     } catch (e) {
       setImportMsg(`⚠ ${(e as Error).message}`);
     } finally {
       setImporting(false);
     }
+  };
+
+  const handleImportToOllama = async () => {
+    if (!downloadedFile || !downloadedModelName) return;
+    await importModel({ name: downloadedModelName, filePath: downloadedFile });
   };
 
   useEffect(() => {
@@ -51,7 +72,7 @@ export function Lab() {
       api.on("bench:progress", (p) => setBench({ step: p.step, frac: p.frac })),
       api.on("bench:done", (p) => { setBench(null); setBusy(null); if (p.error) setBenchErr(p.error); if (p.result) setLast(p.result); if (p.calibration) setCalibration(p.calibration); }),
       api.on("pull:progress", (p) => setPull(p.total ? `${p.status} ${Math.round(((p.completed ?? 0) / p.total) * 100)}%` : p.status)),
-      api.on("pull:done", (p) => { setPull(p.error ? `⚠ ${p.error}` : null); if (!p.error) void loadModels(); }),
+      api.on("pull:done", (p) => { setPull(p.error ? `⚠ ${p.error}` : null); if (!p.error) { void loadModels(); void refreshDownloaded(); } }),
     ];
     return () => off.forEach((f) => f());
   }, [rtId]); // eslint-disable-line
@@ -81,6 +102,25 @@ export function Lab() {
           <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>Model file is on your disk. Start Ollama or LM Studio to load it into memory.</div>
         </div>
         <button className="btn" onClick={() => api.invoke("file:showInFolder", downloadedFile)}>Show in Folder</button>
+      </div>
+    ) : null}
+    {downloadedList.length > 0 ? (
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="row between" style={{ marginBottom: 10 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</div>
+          <button className="btn" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => api.invoke("file:showInFolder", downloadedList[0].filePath)}>Open Models Folder</button>
+        </div>
+        <div className="stack" style={{ gap: 8 }}>
+          {downloadedList.map((dm) => (
+            <div key={dm.filePath} className="row between" style={{ padding: "8px 12px", background: "var(--fill)", borderRadius: "var(--r)", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 13 }}>{dm.name}</div>
+                <div className="mono dim" style={{ fontSize: 11 }}>{dm.sizeGiB} GB · {dm.filePath}</div>
+              </div>
+              <button className="btn" onClick={() => api.invoke("file:showInFolder", dm.filePath)}>Locate</button>
+            </div>
+          ))}
+        </div>
       </div>
     ) : null}
     <Empty title="No local model server found" action={<div className="row" style={{ justifyContent: "center" }}><button className="btn primary" onClick={() => api.invoke("app:openExternal", "https://ollama.com/download")}><Download size={16} />Get Ollama</button><button className="btn" onClick={refreshRuntimes}>Check again</button></div>}>
@@ -119,6 +159,53 @@ export function Lab() {
     {pull ? <div className="dim" style={{ marginTop: 8 }}>{pull}</div> : null}
     {!models.length && !loadErr ? <div className="muted" style={{ marginTop: 12 }}>No models installed yet. Download one above, or use the Best for this laptop page to choose.</div> : null}
     </div>
+    {downloadedList.length > 0 ? (
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="row between" style={{ marginBottom: 10 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</div>
+          <button className="btn" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => api.invoke("file:showInFolder", downloadedList[0].filePath)}>Open Models Folder</button>
+        </div>
+        <div className="stack" style={{ gap: 8 }}>
+          {downloadedList.map((dm) => {
+            const base = dm.name.toLowerCase().replace(/\.gguf$/i, "");
+            const isImported = models.some((m) => m.name.toLowerCase() === base || m.name.toLowerCase().includes(base.slice(0, 15)));
+            const isSelected = model && (model.toLowerCase() === base || model.toLowerCase().includes(base.slice(0, 15)));
+            return (
+              <div key={dm.filePath} className="row between" style={{ padding: "8px 12px", background: "var(--fill)", borderRadius: "var(--r)", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{dm.name}</div>
+                  <div className="mono dim" style={{ fontSize: 11 }}>{dm.sizeGiB} GB · {dm.filePath}</div>
+                </div>
+                <div className="row" style={{ gap: 6 }}>
+                  {isImported ? (
+                    <button
+                      className={`btn ${isSelected ? "primary" : ""}`}
+                      onClick={() => {
+                        const matched = models.find((m) => m.name.toLowerCase() === base || m.name.toLowerCase().includes(base.slice(0, 15)));
+                        if (matched) setModel(matched.name);
+                      }}
+                    >
+                      {isSelected ? "Active in Chat" : "Select in Chat"}
+                    </button>
+                  ) : online.some((r) => r.kind === "ollama") ? (
+                    <button
+                      className="btn primary"
+                      disabled={importing}
+                      onClick={() => importModel(dm)}
+                    >
+                      {importing ? "Importing..." : "Load into Ollama & Chat"}
+                    </button>
+                  ) : (
+                    <span className="dim" style={{ fontSize: 12 }}>Ready for LM Studio</span>
+                  )}
+                  <button className="btn" onClick={() => api.invoke("file:showInFolder", dm.filePath)}>Locate</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ) : null}
     {bench ? <div className="card" style={{ marginBottom: 16 }}><div className="row between"><b>{bench.step}</b><span className="dim">{Math.round(bench.frac * 100)}%</span></div><div className="bar" style={{ marginTop: 10 }}><i className="red" style={{ width: `${bench.frac * 100}%` }} /></div></div> : null}
     {benchErr ? <div className="flag bad" style={{ marginBottom: 16 }}>{benchErr}</div> : null}
     {last ? <BenchCard r={last} /> : null}
