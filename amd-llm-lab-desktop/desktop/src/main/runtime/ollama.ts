@@ -95,10 +95,50 @@ export class OllamaRuntime implements Runtime {
     const tempModelfile = path.join(os.tmpdir(), `Modelfile-${Date.now()}`);
     await fs.writeFile(tempModelfile, `FROM ${cleanPath}\n`, "utf8");
 
+    // Resolve binary location across standard install paths
+    const candidates: string[] = [];
+    if (process.platform === "win32") {
+      const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+      candidates.push(
+        path.join(localAppData, "Programs", "Ollama", "ollama.exe"),
+        "C:\\Program Files\\Ollama\\ollama.exe",
+        "ollama.exe",
+        "ollama"
+      );
+    } else if (process.platform === "darwin") {
+      candidates.push(
+        "/usr/local/bin/ollama",
+        "/opt/homebrew/bin/ollama",
+        "/Applications/Ollama.app/Contents/Resources/ollama",
+        path.join(os.homedir(), ".ollama", "bin", "ollama"),
+        "ollama"
+      );
+    } else {
+      candidates.push(
+        "/usr/local/bin/ollama",
+        "/usr/bin/ollama",
+        path.join(os.homedir(), ".ollama", "bin", "ollama"),
+        "ollama"
+      );
+    }
+
+    let resolvedBin = "ollama";
+    for (const c of candidates) {
+      if (c.includes(path.sep)) {
+        try {
+          await fs.access(c);
+          resolvedBin = c;
+          break;
+        } catch {
+          // try next candidate
+        }
+      }
+    }
+
     try {
-      await execFileAsync("ollama", ["create", name, "-f", tempModelfile]);
-    } catch {
-      // Fallback to HTTP endpoint with all variant fields
+      await execFileAsync(resolvedBin, ["create", name, "-f", tempModelfile]);
+    } catch (cliErr) {
+      // Fallback to HTTP endpoint if CLI is completely unavailable
       const res = await fetch(`${this.baseUrl}/api/create`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -110,7 +150,10 @@ export class OllamaRuntime implements Runtime {
           stream: false,
         }),
       });
-      if (!res.ok) throw new Error(await errText(res));
+      if (!res.ok) {
+        const httpErr = await errText(res);
+        throw new Error(`Failed to import GGUF model into Ollama (${(cliErr as Error)?.message || httpErr})`);
+      }
     } finally {
       await fs.unlink(tempModelfile).catch(() => undefined);
     }

@@ -37,7 +37,17 @@ export interface DownloadProgress {
   speedMBps: number;
 }
 
+function isEligibleGguf(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  if (!lower.endsWith(".gguf")) return false;
+  // Exclude vision/audio multimodal projectors and auxiliary files
+  if (lower.includes(".mmproj") || lower.includes("-mmproj") || lower.includes("_mmproj") || lower.includes("mmproj-")) return false;
+  if (lower.includes("imatrix") || lower.includes(".vocab") || lower.includes("-vocab")) return false;
+  return true;
+}
+
 function matchesQuant(filePath: string, quant: string): boolean {
+  if (!isEligibleGguf(filePath)) return false;
   const p = filePath.toLowerCase();
   const q = quant.toLowerCase();
   const qClean = q.replace(/[^a-z0-9_]/g, "");
@@ -71,7 +81,7 @@ export async function findGgufFile(hfRepo: string, quant: string): Promise<{ rep
     try {
       const tree = (await getJson(`https://huggingface.co/api/models/${repo}/tree/main`)) as Array<{ path: string; size?: number; type: string }>;
       if (Array.isArray(tree)) {
-        const ggufs = tree.filter((f) => f.path.toLowerCase().endsWith(".gguf"));
+        const ggufs = tree.filter((f) => f.path && isEligibleGguf(f.path));
         // Strictly match requested quant
         const match = ggufs.find((f) => matchesQuant(f.path, quant));
         if (match) {
@@ -103,7 +113,7 @@ export async function findGgufFile(hfRepo: string, quant: string): Promise<{ rep
         try {
           const tree = (await getJson(`https://huggingface.co/api/models/${item.id}/tree/main`)) as Array<{ path: string; size?: number; type: string }>;
           if (Array.isArray(tree)) {
-            const ggufs = tree.filter((f) => f.path.toLowerCase().endsWith(".gguf"));
+            const ggufs = tree.filter((f) => f.path && isEligibleGguf(f.path));
             const match = ggufs.find((f) => matchesQuant(f.path, quant));
             if (match) {
               return { repo: item.id, file: match.path, sizeBytes: match.size };
