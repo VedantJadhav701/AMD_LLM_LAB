@@ -13,9 +13,61 @@ export function HistoryPage() {
     try { const r = await api.invoke("hub:submit", id); setShare({ id, done: `Submitted (${r.status}).` }); setRows(await api.invoke("history:list")); }
     catch (e) { setShare({ id, error: (e as Error).message }); }
   }
+
+  const [copiedMd, setCopiedMd] = useState(false);
+
+  function exportCSV() {
+    if (!rows || rows.length === 0) return;
+    const headers = ["Timestamp", "Model", "Quant", "Runtime", "Decode (tok/s)", "Prompt (tok/s)", "GPU Placement %", "Machine"];
+    const lines = rows.map((r) => [
+      `"${new Date(r.at).toISOString()}"`,
+      `"${r.model.replace(/"/g, '""')}"`,
+      `"${r.quant || ""}"`,
+      `"${r.runtimeName || ""}"`,
+      r.decodeTokS?.toFixed(2) ?? "",
+      r.prefillTokS?.toFixed(2) ?? "",
+      r.placement.gpuFraction != null ? `${Math.round(r.placement.gpuFraction * 100)}%` : "",
+      `"${(r.machineSummary || "").replace(/"/g, '""')}"`,
+    ].join(","));
+    const csvContent = [headers.join(","), ...lines].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `amd-llm-lab-benchmarks-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMarkdown() {
+    if (!rows || rows.length === 0) return;
+    const header = `| Date | Model | Quant | Runtime | Decode Speed | GPU % | Machine |\n| --- | --- | --- | --- | --- | --- | --- |`;
+    const lines = rows.map((r) =>
+      `| ${new Date(r.at).toLocaleDateString()} | ${r.model} | ${r.quant || "-"} | ${r.runtimeName} | **${r.decodeTokS?.toFixed(1) ?? "-"} tok/s** | ${r.placement.gpuFraction != null ? `${Math.round(r.placement.gpuFraction * 100)}%` : "-"} | ${r.machineSummary} |`
+    );
+    const md = [`# AMD LLM Lab Benchmark Results`, ``, header, ...lines].join("\n");
+    void navigator.clipboard.writeText(md);
+    setCopiedMd(true);
+    setTimeout(() => setCopiedMd(false), 2000);
+  }
+
   return (<>
-    <h1>Your benchmark runs</h1>
-    <p className="lead">Stored only on this computer.</p>
+    <div className="row between" style={{ alignItems: "flex-start" }}>
+      <div>
+        <h1>Your benchmark runs</h1>
+        <p className="lead" style={{ margin: 0 }}>Stored only on this computer.</p>
+      </div>
+      {rows?.length ? (
+        <div className="row" style={{ gap: 8, marginTop: 4 }}>
+          <button className="btn sm" onClick={exportMarkdown} title="Copy GitHub / Reddit markdown benchmark table">
+            {copiedMd ? "✓ Copied Table!" : "📋 Copy Markdown"}
+          </button>
+          <button className="btn sm" onClick={exportCSV} title="Download spreadsheet CSV for Excel or Google Sheets">
+            📊 Export CSV
+          </button>
+        </div>
+      ) : null}
+    </div>
     {!rows ? null : rows.length === 0 ? <Empty title="No runs yet" action={<button className="btn primary" onClick={() => go("lab")}>Open the Lab</button>}>Run a benchmark and it is saved here.</Empty> : (
       <div className="card" style={{ padding: 0, overflowX: "auto" }}><table>
         <thead><tr><th>When</th><th>Model</th><th>Speed</th><th>On GPU</th><th>Machine</th><th /></tr></thead>
