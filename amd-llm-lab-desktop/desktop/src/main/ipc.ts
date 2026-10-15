@@ -206,6 +206,22 @@ export function registerIpc(getWindow: () => BrowserWindow | null, dataDir: stri
     }
   });
 
+  handle("models:delete", async (filePath) => {
+    if (typeof filePath !== "string") return false;
+    const fs = await import("node:fs/promises");
+    const modelsDir = path.resolve(path.join(dataDir, "models"));
+    const resolvedPath = path.resolve(filePath);
+    if (!resolvedPath.startsWith(modelsDir) || resolvedPath === modelsDir) {
+      throw new Error("Cannot delete files outside of the models directory.");
+    }
+    try {
+      await fs.unlink(resolvedPath);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
   handle("ollama:importGguf", async (a) => {
     const { name, ggufPath } = a as { name: string; ggufPath: string };
     const rts = registry.all();

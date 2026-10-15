@@ -17,6 +17,8 @@ export function Lab() {
   const [pullName, setPullName] = useState(""); const [pull, setPull] = useState<string | null>(null);
   const [importing, setImporting] = useState(false); const [importMsg, setImportMsg] = useState<string | null>(null);
   const [downloadedList, setDownloadedList] = useState<Array<{ name: string; filePath: string; sizeGiB: number }>>([]);
+  const [dlFilter, setDlFilter] = useState("");
+  const [deletingPath, setDeletingPath] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null); const ctx = settings?.defaultCtx ?? 4096;
   const nav = navArg as { catalogId?: string; downloadedFile?: string; modelName?: string } | null;
   const want = nav?.catalogId;
@@ -29,6 +31,19 @@ export function Lab() {
       setDownloadedList(list || []);
     } catch {
       setDownloadedList([]);
+    }
+  };
+
+  const handleDeleteModel = async (dm: { name: string; filePath: string; sizeGiB?: number }) => {
+    if (!window.confirm(`Are you sure you want to delete ${dm.name} from your disk? This will permanently reclaim ${dm.sizeGiB ?? "the"} GB.`)) return;
+    setDeletingPath(dm.filePath);
+    try {
+      await api.invoke("models:delete", dm.filePath);
+      await refreshDownloaded();
+    } catch (e) {
+      alert(`Could not delete file: ${(e as Error).message}`);
+    } finally {
+      setDeletingPath(null);
     }
   };
 
@@ -106,18 +121,44 @@ export function Lab() {
     ) : null}
     {downloadedList.length > 0 ? (
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="row between" style={{ marginBottom: 10 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</div>
+        <div className="row between" style={{ marginBottom: 10, alignItems: "center" }}>
+          <div>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</span>
+            <span className="mono dim" style={{ fontSize: 12, marginLeft: 8 }}>
+              {downloadedList.reduce((acc, m) => acc + (m.sizeGiB || 0), 0).toFixed(1)} GB total
+            </span>
+          </div>
           <button className="btn" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => api.invoke("file:showInFolder", downloadedList[0].filePath)}>Open Models Folder</button>
         </div>
+        {downloadedList.length > 3 ? (
+          <div style={{ marginBottom: 10 }}>
+            <input
+              placeholder="🔍 Filter downloaded models..."
+              value={dlFilter}
+              onChange={(e) => setDlFilter(e.target.value)}
+              style={{ fontSize: 13, padding: "6px 10px" }}
+            />
+          </div>
+        ) : null}
         <div className="stack" style={{ gap: 8 }}>
-          {downloadedList.map((dm) => (
+          {downloadedList.filter((dm) => !dlFilter || dm.name.toLowerCase().includes(dlFilter.toLowerCase())).map((dm) => (
             <div key={dm.filePath} className="row between" style={{ padding: "8px 12px", background: "var(--fill)", borderRadius: "var(--r)", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 500, fontSize: 13 }}>{dm.name}</div>
                 <div className="mono dim" style={{ fontSize: 11 }}>{dm.sizeGiB} GB · {dm.filePath}</div>
               </div>
-              <button className="btn" onClick={() => api.invoke("file:showInFolder", dm.filePath)}>Locate</button>
+              <div className="row" style={{ gap: 6 }}>
+                <button className="btn" onClick={() => api.invoke("file:showInFolder", dm.filePath)}>Locate</button>
+                <button
+                  className="btn"
+                  style={{ color: "var(--danger, #ff453a)" }}
+                  disabled={deletingPath === dm.filePath}
+                  onClick={() => handleDeleteModel(dm)}
+                  title="Delete from disk"
+                >
+                  {deletingPath === dm.filePath ? "…" : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -161,12 +202,27 @@ export function Lab() {
     </div>
     {downloadedList.length > 0 ? (
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="row between" style={{ marginBottom: 10 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</div>
+        <div className="row between" style={{ marginBottom: 10, alignItems: "center" }}>
+          <div>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Downloaded Models on this PC ({downloadedList.length})</span>
+            <span className="mono dim" style={{ fontSize: 12, marginLeft: 8 }}>
+              {downloadedList.reduce((acc, m) => acc + (m.sizeGiB || 0), 0).toFixed(1)} GB total
+            </span>
+          </div>
           <button className="btn" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => api.invoke("file:showInFolder", downloadedList[0].filePath)}>Open Models Folder</button>
         </div>
+        {downloadedList.length > 3 ? (
+          <div style={{ marginBottom: 10 }}>
+            <input
+              placeholder="🔍 Filter downloaded models..."
+              value={dlFilter}
+              onChange={(e) => setDlFilter(e.target.value)}
+              style={{ fontSize: 13, padding: "6px 10px" }}
+            />
+          </div>
+        ) : null}
         <div className="stack" style={{ gap: 8 }}>
-          {downloadedList.map((dm) => {
+          {downloadedList.filter((dm) => !dlFilter || dm.name.toLowerCase().includes(dlFilter.toLowerCase())).map((dm) => {
             const base = dm.name.toLowerCase().replace(/\.gguf$/i, "");
             const isImported = models.some((m) => m.name.toLowerCase() === base || m.name.toLowerCase().includes(base.slice(0, 15)));
             const isSelected = model && (model.toLowerCase() === base || model.toLowerCase().includes(base.slice(0, 15)));
@@ -199,6 +255,15 @@ export function Lab() {
                     <span className="dim" style={{ fontSize: 12 }}>Ready for LM Studio</span>
                   )}
                   <button className="btn" onClick={() => api.invoke("file:showInFolder", dm.filePath)}>Locate</button>
+                  <button
+                    className="btn"
+                    style={{ color: "var(--danger, #ff453a)" }}
+                    disabled={deletingPath === dm.filePath}
+                    onClick={() => handleDeleteModel(dm)}
+                    title="Delete from disk"
+                  >
+                    {deletingPath === dm.filePath ? "…" : "Delete"}
+                  </button>
                 </div>
               </div>
             );
