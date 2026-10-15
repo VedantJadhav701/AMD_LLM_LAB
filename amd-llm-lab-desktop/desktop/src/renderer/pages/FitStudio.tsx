@@ -89,6 +89,72 @@ export function FitStudio() {
 
   const [filter, setFilter] = useState("");
   const [method, setMethod] = useState<"stream" | "convert">("stream");
+  const [autoCleanRaw, setAutoCleanRaw] = useState(true);
+  const [copiedScript, setCopiedScript] = useState<string | null>(null);
+
+  const copyConversionScript = (shellType: "ps" | "bash") => {
+    if (!spec || !cur) return;
+    const cleanId = (spec.name || spec.id).toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+    const hfRepo = spec.hf ?? spec.id;
+    let script = "";
+
+    if (shellType === "ps") {
+      script = [
+        `# === AMD LLM Lab - Local Quantization Pipeline ===`,
+        `# Target Model: ${spec.name} (${spec.paramsB}B)`,
+        `# Target Quantization: ${cur.quant}`,
+        ``,
+        `# 1. Download full unquantized weights from Hugging Face`,
+        `pip install -U "huggingface_hub[cli]"`,
+        `huggingface-cli download ${hfRepo} --local-dir ./models/${cleanId}`,
+        ``,
+        `# 2. Convert raw weights to intermediate FP16 GGUF`,
+        `python ./llama.cpp/convert_hf_to_gguf.py ./models/${cleanId} --outfile ./${cleanId}-f16.gguf --outtype f16`,
+        ``,
+        `# 3. Quantize intermediate FP16 GGUF to ${cur.quant}`,
+        `llama-quantize ./${cleanId}-f16.gguf ./${cleanId}-${cur.quant}.gguf ${cur.quant}`,
+        ``,
+        ...(autoCleanRaw
+          ? [
+              `# 4. Cleanup intermediate unquantized weights (saves ~${fmtGiB((cv?.peakDiskGiB ?? 0) - cur.fileGiB)})`,
+              `Remove-Item -Recurse -Force ./models/${cleanId}`,
+              `Remove-Item -Force ./${cleanId}-f16.gguf`,
+              `Write-Host "Local quantization to ${cur.quant} complete! Model ready at: ./${cleanId}-${cur.quant}.gguf" -ForegroundColor Green`,
+            ]
+          : [`Write-Host "Quantization complete! Model ready at: ./${cleanId}-${cur.quant}.gguf" -ForegroundColor Green`]),
+      ].join("\r\n");
+    } else {
+      script = [
+        `#!/usr/bin/env bash`,
+        `# === AMD LLM Lab - Local Quantization Pipeline ===`,
+        `# Target Model: ${spec.name} (${spec.paramsB}B)`,
+        `# Target Quantization: ${cur.quant}`,
+        `set -e`,
+        ``,
+        `# 1. Download full unquantized weights from Hugging Face`,
+        `pip install -U "huggingface_hub[cli]"`,
+        `huggingface-cli download ${hfRepo} --local-dir ./models/${cleanId}`,
+        ``,
+        `# 2. Convert raw weights to intermediate FP16 GGUF`,
+        `python ./llama.cpp/convert_hf_to_gguf.py ./models/${cleanId} --outfile ./${cleanId}-f16.gguf --outtype f16`,
+        ``,
+        `# 3. Quantize intermediate FP16 GGUF to ${cur.quant}`,
+        `llama-quantize ./${cleanId}-f16.gguf ./${cleanId}-${cur.quant}.gguf ${cur.quant}`,
+        ``,
+        ...(autoCleanRaw
+          ? [
+              `# 4. Cleanup intermediate unquantized weights (saves ~${fmtGiB((cv?.peakDiskGiB ?? 0) - cur.fileGiB)})`,
+              `rm -rf ./models/${cleanId} ./${cleanId}-f16.gguf`,
+              `echo "Local quantization to ${cur.quant} complete! Model ready at: ./${cleanId}-${cur.quant}.gguf"`,
+            ]
+          : [`echo "Quantization complete! Model ready at: ./${cleanId}-${cur.quant}.gguf"`]),
+      ].join("\n");
+    }
+
+    void navigator.clipboard.writeText(script);
+    setCopiedScript(shellType);
+    setTimeout(() => setCopiedScript(null), 2500);
+  };
 
   const filteredCatalog = catalog.filter((m) => !filter || m.name.toLowerCase().includes(filter.toLowerCase()) || m.family.toLowerCase().includes(filter.toLowerCase()) || m.id.toLowerCase().includes(filter.toLowerCase()));
 
@@ -253,6 +319,58 @@ export function FitStudio() {
                     Open in Lab / Chat
                   </button>
                   <button className="btn" onClick={() => setDlCompletedPath(null)}>Done</button>
+                </div>
+              </div>
+            ) : method === "convert" ? (
+              <div className="stack" style={{ gap: 12 }}>
+                <div className="card" style={{ background: "var(--fill)", border: "1px solid var(--sep)", padding: 14 }}>
+                  <div className="row between" style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                    <span>Local Quantization Pipeline for {cur.quant}</span>
+                    <span className="mono dim">Peak Disk: {fmtGiB(cv?.peakDiskGiB ?? 0)}</span>
+                  </div>
+                  <div className="stack" style={{ gap: 6, fontSize: 12 }}>
+                    <div className="row" style={{ gap: 8 }}>
+                      <span className="dim">1.</span>
+                      <span>Download unquantized SafeTensors from Hugging Face ({spec.hf ?? spec.id})</span>
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <span className="dim">2.</span>
+                      <span>Convert SafeTensors to intermediate FP16 GGUF via llama.cpp</span>
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <span className="dim">3.</span>
+                      <span>Quantize FP16 GGUF to target <b>{cur.quant}</b> (target size: {fmtGiB(cur.fileGiB)})</span>
+                    </div>
+                    {autoCleanRaw ? (
+                      <div className="row" style={{ gap: 8, color: "#34c759" }}>
+                        <span>✓</span>
+                        <span>Auto-reclaim ~{fmtGiB((cv?.peakDiskGiB ?? 0) - cur.fileGiB)} disk by purging raw weights on completion</span>
+                      </div>
+                    ) : null}
+                  </div>
+                  <label className="row" style={{ marginTop: 12, fontSize: 12 }}>
+                    <input
+                      type="checkbox"
+                      style={{ width: 16 }}
+                      checked={autoCleanRaw}
+                      onChange={(e) => setAutoCleanRaw(e.target.checked)}
+                    />
+                    Purge raw weights and intermediate FP16 after quantization completes
+                  </label>
+                </div>
+                <div className="row" style={{ gap: 10 }}>
+                  <button className="btn primary" onClick={() => copyConversionScript("ps")}>
+                    {copiedScript === "ps" ? "✓ Copied PowerShell Script!" : "📋 Copy PowerShell Command"}
+                  </button>
+                  <button className="btn" onClick={() => copyConversionScript("bash")}>
+                    {copiedScript === "bash" ? "✓ Copied Bash Script!" : "📋 Copy Bash Script"}
+                  </button>
+                  <button className="btn" onClick={() => api.invoke("app:openExternal", "https://github.com/ggerganov/llama.cpp#prepare-data--run")}>
+                    llama.cpp Guide
+                  </button>
+                </div>
+                <div className="dim" style={{ fontSize: 12 }}>
+                  Run the copied script in PowerShell or terminal with Python and llama.cpp installed to convert weights locally.
                 </div>
               </div>
             ) : (
