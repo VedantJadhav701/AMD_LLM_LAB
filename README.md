@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><strong>⚡ Download Desktop App (v0.1.0)</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><strong>⚡ Download Desktop App (v0.2.0)</strong></a> &nbsp;|&nbsp;
   <a href="https://amd-llm-lab.vercel.app/"><strong>🌐 Live Web Demo</strong></a> &nbsp;|&nbsp;
   <a href="https://vedantjadhav.hashnode.dev/amd-llm-lab"><strong>📝 Technical Breakdown</strong></a> &nbsp;|&nbsp;
   <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><strong>💻 GitHub Repository</strong></a>
