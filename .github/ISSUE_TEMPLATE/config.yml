@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/VedantJadhav701/AMD_LLM_LAB/discussions
+    about: Ask questions, get help, or discuss LLM inference and hardware optimizations.
+  - name: 📝 Technical Deep Dive
+    url: https://vedantjadhav.hashnode.dev/amd-llm-lab
+    about: Read the engineering breakdown of the memory calculator and roofline physics.

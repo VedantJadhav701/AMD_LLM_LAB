@@ -11,13 +11,14 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><img src="https://img.shields.io/github/stars/VedantJadhav701/AMD_LLM_LAB?style=social" alt="GitHub Stars"></a>
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/network/members"><img src="https://img.shields.io/github/forks/VedantJadhav701/AMD_LLM_LAB?style=social" alt="GitHub Forks"></a>
+  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest"><img src="https://img.shields.io/github/v/release/VedantJadhav701/AMD_LLM_LAB?color=00c2de&style=flat-square" alt="Latest Release"></a>
   <a href="https://amd-llm-lab.vercel.app/"><img src="https://img.shields.io/badge/Live%20Demo-amd--llm--lab.vercel.app-00c2de?logo=vercel&style=flat-square" alt="Live Demo"></a>
   <a href="https://vedantjadhav.hashnode.dev/amd-llm-lab"><img src="https://img.shields.io/badge/Article-Hashnode-2962ff?logo=hashnode&style=flat-square" alt="Technical Breakdown"></a>
-  <a href="https://github.com/VedantJadhav701/AMD_LLM_LAB"><img src="https://img.shields.io/badge/GitHub-VedantJadhav701%2FAMD__LLM__LAB-00c2de?logo=github&style=flat-square" alt="GitHub Repository"></a>
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Frontend-Next.js%2016-000000?logo=next.js&style=flat-square" alt="Next.js 16"></a>
-  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&style=flat-square" alt="FastAPI"></a>
   <a href="https://rocm.docs.amd.com/"><img src="https://img.shields.io/badge/Hardware-AMD%20ROCm%20%7C%20MI300X-ed1c24?logo=amd&style=flat-square" alt="AMD ROCm"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/Tests-64%20Passing-brightgreen?style=flat-square" alt="Tests 64 Passing">
 </p>
 
 <p align="center">
@@ -264,16 +265,31 @@ npm run build
 
 ---
 
-## 🤝 Contributing & Community
+## 📚 Documentation & Community Health
 
-Contributions are warmly welcomed! 
+We maintain a complete, transparent open-source governance suite:
 
-Whether you want to add new measured benchmark rows, improve prediction models, submit ROCm GPU runs, or enhance UI components:
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Push to your branch (`git push origin feature/amazing-feature`).
-5. Open a **Pull Request**.
+| Document | Purpose |
+| :--- | :--- |
+| [🤝 **CONTRIBUTING.md**](CONTRIBUTING.md) | Dev setup, testing workflows, PR guidelines, and adding new models |
+| [🗺️ **ROADMAP.md**](ROADMAP.md) | Upcoming features, ROCm 6.x native probing, and multi-GPU tensor parallel plans |
+| [📜 **CODE_OF_CONDUCT.md**](CODE_OF_CONDUCT.md) | Community standards and pledge (Contributor Covenant 2.1) |
+| [🔒 **SECURITY.md**](SECURITY.md) | Local loopback isolation, vulnerability disclosure, and privacy architecture |
+| [💬 **SUPPORT.md**](SUPPORT.md) | Frequently asked questions, hardware calibration guide, and discussion channels |
+| [📄 **LICENSE**](LICENSE) | Permissive open-source MIT License |
+| [🔖 **CITATION.cff**](CITATION.cff) | Citation file for academic papers and machine learning publications |
+
+---
+
+## ⭐ Show Your Support
+
+If you find AMD LLM Lab useful, please consider giving it a **Star on GitHub**! It helps the project gain visibility, attract open-source contributors, and expand AMD hardware inference support.
+
+<p align="center">
+  <a href="https://star-history.com/#VedantJadhav701/AMD_LLM_LAB&Date">
+    <img src="https://api.star-history.com/svg?repos=VedantJadhav701/AMD_LLM_LAB&type=Date" width="750" alt="Star History Chart" />
+  </a>
+</p>
 
 ---
 
@@ -282,10 +298,11 @@ Whether you want to add new measured benchmark rows, improve prediction models, 
 - 🌐 **Live Demo Platform**: [amd-llm-lab.vercel.app](https://amd-llm-lab.vercel.app/)
 - 📝 **Technical Breakdown Article**: [vedantjadhav.hashnode.dev/amd-llm-lab](https://vedantjadhav.hashnode.dev/amd-llm-lab)
 - 💻 **GitHub Repository**: [github.com/VedantJadhav701/AMD_LLM_LAB](https://github.com/VedantJadhav701/AMD_LLM_LAB)
+- 📦 **Latest Desktop Releases**: [Releases Page](https://github.com/VedantJadhav701/AMD_LLM_LAB/releases/latest)
 
 ---
 
 ## ⚖️ Disclaimer & License
 
-- **License**: Distributed under the **MIT License**. See `LICENSE` for details.
+- **License**: Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 - **Disclaimer**: *AMD LLM Lab is an independent open-source research project and is not an official product of Advanced Micro Devices, Inc. AMD, Instinct, ROCm, Radeon, and the AMD logo are trademarks of Advanced Micro Devices, Inc.*
