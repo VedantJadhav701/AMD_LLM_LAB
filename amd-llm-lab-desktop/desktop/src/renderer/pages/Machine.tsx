@@ -9,6 +9,54 @@ export function MachinePage() {
   const o = settings?.overrides ?? {};
   const [draft, setDraft] = useState<{ vram: string; bw: string; ram: string; cpu: boolean }>({ vram: String(o.vramGiB ?? ""), bw: String(o.bandwidthGBps ?? ""), ram: String(o.ramAvailableGiB ?? ""), cpu: !!o.forceCpuOnly });
   const [saved, setSaved] = useState(false);
+  const [copiedMd, setCopiedMd] = useState(false);
+
+  function exportMarkdown() {
+    if (!machine) return;
+    const lines = [
+      `# AMD LLM Lab - Hardware & Benchmark Profile`,
+      ``,
+      `### System Specifications`,
+      `- **OS**: ${machine.osVersion} (${machine.arch})`,
+      `- **CPU**: ${machine.cpu.name} (${machine.cpu.physicalCores ?? "?"} physical cores, ${machine.cpu.logicalCores} threads)`,
+      `- **RAM**: ${fmtGiB(machine.ram.totalGiB)} total (${fmtGiB(machine.ram.availableGiB)} available${machine.ram.type ? `, ${machine.ram.type}` : ""})`,
+      `- **RAM Memory Read Speed**: ${machine.memProbe ? `${machine.memProbe.readGBps.toFixed(1)} GB/s` : "Not measured"}`,
+      ``,
+      `### GPU / Accelerators`,
+      ...(machine.gpus.length === 0
+        ? [`- None detected (CPU execution mode)`]
+        : machine.gpus.map((g, idx) =>
+            `- **GPU ${idx + 1}**: ${g.name} | VRAM: ${g.dedicatedGiB ? fmtGiB(g.dedicatedGiB) : g.sharedGiB ? `${fmtGiB(g.sharedGiB)} shared` : "N/A"} | Bandwidth: ${g.bandwidthGBps ? `${g.bandwidthGBps} GB/s` : "Estimated"} | Accel: ${g.accel}`
+          )),
+      ``,
+      `### Benchmark Calibration`,
+      `- **GPU Effective**: ${calibration.gpu ? `${calibration.gpu.model} @ ${calibration.gpu.measuredTokS.toFixed(1)} tok/s (${calibration.gpu.effGBps.toFixed(0)} GB/s)` : "None"}`,
+      `- **CPU Effective**: ${calibration.cpu ? `${calibration.cpu.model} @ ${calibration.cpu.measuredTokS.toFixed(1)} tok/s (${calibration.cpu.effGBps.toFixed(0)} GB/s)` : "None"}`,
+      ``,
+      `*Generated with AMD LLM Lab Desktop*`,
+    ];
+    void navigator.clipboard.writeText(lines.join("\n"));
+    setCopiedMd(true);
+    setTimeout(() => setCopiedMd(false), 2000);
+  }
+
+  function exportJson() {
+    if (!machine) return;
+    const data = {
+      timestamp: new Date().toISOString(),
+      machine,
+      calibration,
+      overrides: settings?.overrides,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `amd-llm-lab-hardware-report-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!machine) return <><h1>My machine</h1><div className="muted">Scanning…</div></>;
   const num = (s: string) => { const n = Number(s); return s.trim() && Number.isFinite(n) && n > 0 ? n : null; };
   async function save() {
@@ -16,7 +64,20 @@ export function MachinePage() {
     await saveSettings({ overrides: ov }); setSaved(true); setTimeout(() => setSaved(false), 1800);
   }
   return (<>
-    <div className="eyebrow">My machine</div><h1>What the app found</h1>
+    <div className="row between" style={{ alignItems: "flex-start" }}>
+      <div>
+        <div className="eyebrow">My machine</div>
+        <h1>What the app found</h1>
+      </div>
+      <div className="row" style={{ gap: 8, marginTop: 4 }}>
+        <button className="btn sm" onClick={exportMarkdown} title="Copy GitHub/Reddit friendly markdown hardware profile">
+          {copiedMd ? "✓ Copied Markdown!" : "📋 Copy Markdown Specs"}
+        </button>
+        <button className="btn sm" onClick={exportJson} title="Export full JSON diagnostic profile">
+          💾 Export JSON
+        </button>
+      </div>
+    </div>
     <p className="lead">Detected locally. If something looks wrong, correct it below and every prediction updates.</p>
     <div className="grid g4 card" style={{ marginBottom: 16 }}>
       <Stat k="Processor" v={<span style={{ fontSize: 18 }}>{machine.cpu.name}</span>} s={`${machine.cpu.physicalCores ?? "?"} cores / ${machine.cpu.logicalCores} threads`} />
