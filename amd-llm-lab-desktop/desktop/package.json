@@ -1,7 +1,7 @@
 {
   "name": "amd-llm-lab-desktop",
   "productName": "AMD LLM Lab",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Find out which LLMs your laptop can really run, then test them.",
   "author": "Vedant Jadhav <vedantjadhav1414@gmail.com>",
   "license": "MIT",
