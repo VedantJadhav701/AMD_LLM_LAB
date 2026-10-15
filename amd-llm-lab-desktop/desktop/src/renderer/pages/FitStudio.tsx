@@ -87,6 +87,20 @@ export function FitStudio() {
 
   async function lookup() { setBusy(true); setErr(null); try { const r = await api.invoke("hf:lookup", hf); setCatalog((x) => (x.some((m) => m.id === r.spec.id) ? x : [r.spec, ...x])); setModelId(r.spec.id); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); } }
 
+  const [filter, setFilter] = useState("");
+  const [method, setMethod] = useState<"stream" | "convert">("stream");
+
+  const filteredCatalog = catalog.filter((m) => !filter || m.name.toLowerCase().includes(filter.toLowerCase()) || m.family.toLowerCase().includes(filter.toLowerCase()) || m.id.toLowerCase().includes(filter.toLowerCase()));
+
+  const groupedCatalog = useMemo(() => {
+    return filteredCatalog.reduce<Record<string, ModelSpec[]>>((acc, m) => {
+      const fam = m.family || "Other";
+      if (!acc[fam]) acc[fam] = [];
+      acc[fam].push(m);
+      return acc;
+    }, {});
+  }, [filteredCatalog]);
+
   const fit = useMemo(() => (vs ? bestFit(vs) : null), [vs]);
   const cur = vs?.find((v) => v.quant === sel) ?? null;
   const q = cur ? QUANTS[cur.quant] : null;
@@ -99,8 +113,29 @@ export function FitStudio() {
     <h1>Fit Studio</h1>
     <p className="lead">Pick any model, then choose how small to make it. Lower bit levels fit smaller laptops but lose quality, and the app tells you exactly what you trade.</p>
     <div className="card" style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: 12 }}>
+        <input
+          placeholder="🔍 Search 45+ open-source models (DeepSeek, Llama, Qwen, Gemma, Mistral, Phi...)"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          style={{ fontSize: 13.5, padding: "8px 12px" }}
+        />
+      </div>
       <div className="grid g3" style={{ alignItems: "end" }}>
-        <label className="f">Model<select value={modelId} onChange={(e) => setModelId(e.target.value)}>{catalog.map((m) => <option key={m.id} value={m.id}>{m.name}{m.source === "huggingface" ? " (Hugging Face)" : ""}</option>)}</select></label>
+        <label className="f">
+          Model
+          <select value={modelId} onChange={(e) => setModelId(e.target.value)}>
+            {Object.entries(groupedCatalog).map(([family, models]) => (
+              <optgroup key={family} label={`${family} (${models.length})`}>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.paramsB}B)
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
         <CtxSelect value={c} onChange={setCtx} />
         <div className="row" style={{ flexWrap: "nowrap" }}>
           <label className="f" style={{ flex: 1 }}>Or Hugging Face id<input placeholder="owner/name" value={hf} onChange={(e) => setHf(e.target.value)} onKeyDown={(e) => e.key === "Enter" && hf && lookup()} /></label>
@@ -138,11 +173,47 @@ export function FitStudio() {
             <p className="muted" style={{ marginTop: 0 }}>{q.blurb}</p>
             <VerdictBody v={cur} />
             <h3 style={{ marginTop: 20 }}>How you would get it</h3>
+            <div className="seg" style={{ width: "100%", marginBottom: 14 }}>
+              <button
+                type="button"
+                className={method === "stream" ? "on" : ""}
+                style={{ flex: 1, textAlign: "center", padding: "8px 10px", fontSize: 13 }}
+                onClick={() => setMethod("stream")}
+              >
+                ⚡ Stream Ready-Made ({fmtGiB(dl?.downloadGiB ?? 0)})
+              </button>
+              <button
+                type="button"
+                className={method === "convert" ? "on" : ""}
+                style={{ flex: 1, textAlign: "center", padding: "8px 10px", fontSize: 13 }}
+                onClick={() => setMethod("convert")}
+              >
+                🛠️ Download & Convert ({fmtGiB(cv?.peakDiskGiB ?? 0)})
+              </button>
+            </div>
             <div className="stack" style={{ gap: 8 }}>
-              {dl ? <div className="row between"><span>{ROUTES["download-quant"]}</span><span className="mono dim">{fmtGiB(dl.downloadGiB)} · {min(dl.minutes)}</span></div> : null}
-              {cv ? <div className="row between"><span>{ROUTES["convert-from-hf"]}</span><span className="mono dim">up to {fmtGiB(cv.peakDiskGiB)} disk · {min(cv.minutes)}</span></div> : null}
-              <label className="f" style={{ marginTop: 4 }}>Your download speed<select value={mbps} onChange={(e) => setMbps(Number(e.target.value))}>{[25, 50, 100, 300, 1000].map((x) => <option key={x} value={x}>{x} Mbps</option>)}</select></label>
-              <div className="dim" style={{ fontSize: 12 }}>Time estimates are rough planning numbers. Ready-made files are usually available for popular models.</div>
+              {method === "stream" ? (
+                <>
+                  <div className="row between">
+                    <span>Stream target GGUF from Hugging Face</span>
+                    <span className="mono dim">{fmtGiB(dl?.downloadGiB ?? 0)} · {min(dl?.minutes ?? [0, 0])}</span>
+                  </div>
+                  <div className="dim" style={{ fontSize: 12 }}>
+                    Fast path: downloads pre-quantized {cur.quant} binary directly to local storage without burning CPU.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="row between">
+                    <span>Fetch original weights and quantize locally</span>
+                    <span className="mono dim">up to {fmtGiB(cv?.peakDiskGiB ?? 0)} disk · {min(cv?.minutes ?? [0, 0])}</span>
+                  </div>
+                  <div className="dim" style={{ fontSize: 12 }}>
+                    Studio path: pulls original SafeTensors from {spec.hf ?? spec.id} and quantizes to {cur.quant} on your CPU/GPU.
+                  </div>
+                </>
+              )}
+              <label className="f" style={{ marginTop: 6 }}>Your download speed<select value={mbps} onChange={(e) => setMbps(Number(e.target.value))}>{[25, 50, 100, 300, 1000].map((x) => <option key={x} value={x}>{x} Mbps</option>)}</select></label>
             </div>
             <h3 style={{ marginTop: 20 }}>Download & Prepare</h3>
             {downloading ? (

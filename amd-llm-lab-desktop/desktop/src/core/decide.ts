@@ -340,6 +340,7 @@ function recommendPass(machine: MachineProfile, catalog: ModelSpec[], opts: Eval
     if (!pick) continue;
     const eff = effectiveParamsB(model);
     let qualityScore = eff * QUANTS[pick.quant].quality;
+    if (pick.plan?.kind === "split") qualityScore *= 0.65;
     if (levelRank(pick.level) < levelRank("good")) qualityScore *= 0.6;
     out.push({ model, verdict: pick, qualityScore });
   }
